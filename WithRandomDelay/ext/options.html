@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leakuidator</title>
+    <style type="text/css" media="screen">
+    
+    body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            padding: 20px;
+        }
+
+    td {
+            font-size: 13px;
+            vertical-align: top;
+            text-align: left;
+        }
+    
+    p {
+            margin-top: 0.5em;
+        }
+        
+    button {
+            white-space: pre;
+        }
+    </style>
+</head>
+
+<body>
+<div>
+    <div style="width: 600px; margin: 0 auto; background: #fff; color: #000;">
+    <table>
+        <tr>
+            <td style="padding-left: 100px; padding-right: 100px; padding-bottom: 20px; vertical-align: middle;">
+                <img src="../icons/icon.png" height="100" width="100">
+            </td>
+            <td>
+                <h1 style="font-weight: 700; font-size: 24px; color: #000000;">
+                    <span style="color: blue;">Leakuidator</span>
+                </h1>
+            </td>
+        </tr>
+    </table>
+
+    <div id="tabs">
+
+        <div id="tab-#tab-options">
+            <p>
+                <span style="font-weight: 700; font-size: 14px; color: #2e2e2e;">Protection Mode:</span>
+            </p>
+            <div id="selectmode" class="mode">
+                <tr>
+                    <td>
+                <select id="modeOption">
+                    <option>lax</option>
+                    <option>strict</option>
+                </select>
+            </td>
+            <td>
+                <button id="saveModeButton" style="margin-left: 10px;"><span>save</span></button>
+            </td>
+            <td>
+                <span id='status'></span>
+            </td>
+            </tr>
+            </div>
+
+            
+        </br>
+    </br>
+        </div>
+
+        <div id="tab-excludelist">
+            <p style="font-weight: 700; font-size: 14px; color: #2e2e2e;">Exclude List:</p>
+
+            <form id="excludelistForm" action="#">
+                <table>
+
+                    <tr>
+                        <td style="max-width: 100%">
+                            <input type="text" value="" placeholder="source host" id="newExcludeSourceHost" style="width: 100%;margin: 0px 0px 8px 0px;">
+                            <input type="text" value="" placeholder="target host" id="newExcludetargetHost" style="width: 100%;margin: 0px 0px 8px 0px;">
+                        </td>
+                        <td>
+                            <button class="addButton" id="addToExcludeMap" type="submit" style="margin-left: 10px;"><span>add</span></button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <select id="excludedMappingsBox" size="10" style="width: 500px; background: white;"></select>
+                        </td>
+                        <td >
+                            <button id="removeFromExcludeMap" style="margin-left: 10px;" class="removeButton"><span>remove selected</span></button>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </br>
+    </br>
+        </div>
+
+        <div id="tab-ignorelist">
+            <p style="font-weight: 700; font-size: 14px; color: #2e2e2e;">Ignore List:</p>
+            <form id="ignorelistForm" action="#">
+                <table>
+
+                    <tr>
+                        <td style="max-width: 100%">
+                            <input type="text" value="" placeholder="source host" id="newIgnoreSourceHost" style="width: 100%;margin: 0px 0px 8px 0px;">
+                            <input type="text" value="" placeholder="target host" id="newIgnoretargetHost" style="width: 100%;margin: 0px 0px 8px 0px;">
+                        </td>
+                        <td>
+                            <button class="addButton" id="addToIgnoreMap" type="submit" style="margin-left: 10px;"><span>add</span></button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <select id="ignoredMappingsBox" size="10" style="width: 500px; background: white;"></select>
+                        </td>
+                        <td>
+                            <button id="removeFromIgnoreMap" style="margin-left: 10px;" class="removeButton"><span>remove selected</span></button>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+
+            <!--<p id="filter-must-follow-syntax" class="i18n_filter_must_follow_syntax Opt2TabingText"></p>-->
+
+        </div>
+    </div>
+    <script src="options.js"></script>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "name": "Leakuidator",
+  "description": "Protect your identity on the web",
+  "version": "0.1", 
+  "permissions": ["webNavigation", "webRequest", "background", "webRequestBlocking","tabs","cookies","storage","https://*/*"],
+  "icons": {
+		"16": "./icons/icon.png",
+		"48": "./icons/icon.png",
+		"128": "./icons/icon.png"
+  },
+  "background":
+  {
+		"persistent": true,
+    "scripts": ["./asset/data.js","./lib/bundle.js","./lib/utils.js","./ext/background.js" ]
+  },
+  "browser_action": {
+    "default_popup": "./ext/popup.html"
+  },
+  "options_page": "./ext/options.html",
+  "options_ui": {
+    "page": "./ext/options.html",
+    "open_in_tab": true
+  }
+}
