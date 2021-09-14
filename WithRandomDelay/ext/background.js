@@ -13,7 +13,6 @@ var requestBody = []; // body of request - extracted from first request - is nee
 var corwc = []; // check if it's cross origin request with cookie
 var firstResponseHeaders = []; // response headers for the first requests with cookies removed
 var xhrData = []; // data related to second request with cookies included
-var occured = []; // only first occurrence of a request is monitored identified by request Id
 var tabrelations = [];
 
 // default extension mode
@@ -392,29 +391,26 @@ function onBeforeSendHeaders(details) {
  */
 function onHeadersReceived(details) {
     // check if it was marked as suspicious
-    if(corwc[details.requestId] == true) {
+    if(corwc[details.requestId]) {
         // if there are multiple events fired for one requestId,
         // evaluate them only once (tracked with occured variable)
         // so corwc requests are evaluated only one time for
         // the distinguishable  differences
-        if(occured[details.requestId] != true) {
-            occured[details.requestId] = true;
-            // store response headers into memory for later use by @xhRequest
-            firstResponseHeaders[details.requestId] = [];
-            for(var i = 0, l = details.responseHeaders.length; i < l; i++) {
-                firstResponseHeaders[details.requestId][details.responseHeaders[i].name.toLowerCase()] = details.responseHeaders[i].value.toLowerCase();
-            }
 
-            //console.log(details.requestId + " going to xhr from " + xhrData[details.requestId].source + " to " + xhrData[details.requestId].target);
-            //susCount++;
-            //console.log('suspicious # ' + susCount + ' from ' + xhrData[details.requestId].source);
-
-            // make the second request, with cookies
-            //xhRequest(firstResponseHeaders[details.requestId], xhrData[details.requestId]);
-            setTimeout(xhRequest, Math.random() * 1000, details.requestId);
-
-            //delete corwc[details.requestId];
+        // store response headers into memory for later use by @xhRequest
+        firstResponseHeaders[details.requestId] = [];
+        for(var i = 0, l = details.responseHeaders.length; i < l; i++) {
+            firstResponseHeaders[details.requestId][details.responseHeaders[i].name.toLowerCase()] = details.responseHeaders[i].value.toLowerCase();
         }
+
+        //console.log(details.requestId + " going to xhr from " + xhrData[details.requestId].source + " to " + xhrData[details.requestId].target);
+        //susCount++;
+        //console.log('suspicious # ' + susCount + ' from ' + xhrData[details.requestId].source);
+
+        // make the second request, with cookies
+        //xhRequest(firstResponseHeaders[details.requestId], xhrData[details.requestId]);
+        setTimeout(xhRequest, Math.random() * 1000, details.requestId);
+        delete corwc[details.requestId];
         // return response to first request, with Set-Cookie header removed
         return { responseHeaders: removeResponseHeaders(details, 'Set-Cookie') };
     }
@@ -646,8 +642,8 @@ function saveDecisions() {
  * @param {first request headers} requestOnedata 
  */
 function xhRequest(rId) {
-    let responseOneData = firstResponseHeaders[rId]
-    let requestOnedata = xhrData[rId]
+    let responseOneData = firstResponseHeaders[rId];
+    let requestOnedata = xhrData[rId];
     // extract the request headers that are not unsafe
     requestOnedata.headers = trimUnsafeHeaders(requestOnedata.headers);
 
@@ -753,76 +749,8 @@ function xhRequest(rId) {
         if(this.readyState === this.DONE) {
             let status = this.status;
             if (status === 0 || (status >= 200 && status < 400)) {
-                // The request has been completed successfully
-                // these information are no longer needed
-                /*let size1 = 0;
-                let size2 = 0;
-                let secondHeaders = getHeaderMap(request.getAllResponseHeaders());
-                if(!isEmpty(firstResponseHeaders)) {
-                    size1 = firstResponseHeaders.length;
-                }
-                if(!isEmpty(secondHeaders)) {
-                    size2 = secondHeaders.length;
-                }
-                if(size1 != size2) {
-                    // There has been an error with the request!
-                    // it is dangerous
-                    //danCount++;
-                    //console.log('dangerous # ' + danCount + ' from ' + requestOnedata.source);
-
-                    // extract Site/Origin data from source and target of a request
-                    let targetSite = getSiteFromUrl(requestOnedata.target);
-                    let targetOrigin = combineOrigin(getOriginFromUrl(requestOnedata.target));
-                    let sourceSite = getSiteFromUrl(requestOnedata.source);
-                    let sourceOrigin = combineOrigin(getOriginFromUrl(requestOnedata.source));
-                    
-                    // prepare element to compare with past user decisions
-                    let element = [];
-                    if(extensionMode == "lax") {
-                        element = [sourceSite, targetSite];
-                    } else if(extensionMode == "strict") {
-                        element = [sourceOrigin, targetOrigin];
-                    }
-                    
-                    // extract tab Id
-                    let tId = requestOnedata.tabId;*/
-
-                    /*var excludeFlag = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite)) ||
-                    (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
-
-                    // check if the request is ignored by user in the past decisions
-                    /*let ignoreFlag = (((extensionMode == "lax" && isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
-                    (extensionMode == "strict" && isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
-
-                    // user needs to know about this dangerous request
-                    if(!ignoreFlag) {
-                        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                            var currTab = tabs[0];
-                            if (currTab) {
-                                // init the map for the tab
-                                if(isEmpty(dangerousMapPerTab[currTab.id])) {
-                                    dangerousMapPerTab[currTab.id] = [];
-                                }
-
-                                // add to dangerous map
-                                dangerousMapPerTab[currTab.id].pushIfNotExist(element, function(e) {
-                                    return e[0] == element[0] && e[1] == element[1];
-                                });
-
-                                // set notification for user
-                                chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
-                                var number  = isEmpty(dangerousMapPerTab[currTab.id]) ? 0 : dangerousMapPerTab[currTab.id].length;
-                                chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
-                            }
-                        });
-
-                        // purgesuspiciousMapForTab(tId);
-                    
-                        //console.log(data.id + " observable difference!");
-                    }
-                }
                 delete xhrData[requestOnedata.id];
-                delete firstResponseHeaders[requestOnedata.id];*/
+                delete firstResponseHeaders[requestOnedata.id];
             } else {
                 // There has been an error with the request!
                 // it is dangerous
