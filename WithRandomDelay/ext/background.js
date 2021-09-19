@@ -14,7 +14,7 @@ var corwc = []; // check if it's cross origin request with cookie
 var firstResponseHeaders = []; // response headers for the first requests with cookies removed
 var xhrData = []; // data related to second request with cookies included
 var tabrelations = [];
-
+var occured = [];
 // default extension mode
 var extensionMode = "lax"; // lax or strict
 
@@ -356,24 +356,28 @@ function onBeforeSendHeaders(details) {
     }
     
     // if survived the 7 conditions, mark the request as suspicious
-    corwc[details.requestId] = true;
-    /*console.log(details.requestId + " corwc set. extMode: " + extensionMode + " excludeFlag: " + excludeFlag +
-        " laxConditions: " + laxConditions + " strictCondtions: " + strictConditions + " fetchMode: " + fetchMode +
-        " fetchSite " + fetchSite + " fetchDest: " + fetchDest +  " from " + src + " to " + trgt);*/
-    
-    // copy headers to a new array, to survive
-    let copiedHeaders = returnHeaders(details);
-    
+    if(!corwc[details.requestId]) {
+        corwc[details.requestId] = true;
+        /*console.log(details.requestId + " corwc set. extMode: " + extensionMode + " excludeFlag: " + excludeFlag +
+            " laxConditions: " + laxConditions + " strictCondtions: " + strictConditions + " fetchMode: " + fetchMode +
+            " fetchSite " + fetchSite + " fetchDest: " + fetchDest +  " from " + src + " to " + trgt);*/
+        
+        // copy headers to a new array, to survive
+        let copiedHeaders = returnHeaders(details);
+        
 
-    // store first request data, to be used by @xhRequest
-    xhrData[details.requestId] = [];
-    xhrData[details.requestId].id = details.requestId;
-    xhrData[details.requestId].method = details.method;
-    xhrData[details.requestId].headers = copiedHeaders;
-    xhrData[details.requestId].body = requestBody[details.requestId];
-    xhrData[details.requestId].tabId = details.tabId;
-    xhrData[details.requestId].source = src;
-    xhrData[details.requestId].target = trgt;
+        // store first request data, to be used by @xhRequest
+        xhrData[details.requestId] = [];
+        xhrData[details.requestId].id = details.requestId;
+        xhrData[details.requestId].method = details.method;
+        xhrData[details.requestId].headers = copiedHeaders;
+        xhrData[details.requestId].body = requestBody[details.requestId];
+        xhrData[details.requestId].tabId = details.tabId;
+        xhrData[details.requestId].source = src;
+        xhrData[details.requestId].target = trgt;    
+    } else {
+        occured[details.requestId] = true;
+    }
     
     delete requestBody[details.requestId];
     ////console.log(details.requestId + " origin: " + originDomain + " target: " + targetDomain + " onBeforeSendHeaders: modified first request!");
@@ -391,7 +395,7 @@ function onBeforeSendHeaders(details) {
  */
 function onHeadersReceived(details) {
     // check if it was marked as suspicious
-    if(corwc[details.requestId]) {
+    if(corwc[details.requestId] && !occured[details.requestId]) {
         // if there are multiple events fired for one requestId,
         // evaluate them only once (tracked with occured variable)
         // so corwc requests are evaluated only one time for
@@ -410,7 +414,7 @@ function onHeadersReceived(details) {
         // make the second request, with cookies
         //xhRequest(firstResponseHeaders[details.requestId], xhrData[details.requestId]);
         setTimeout(xhRequest, Math.random() * 1000, details.requestId);
-        delete corwc[details.requestId];
+        //delete corwc[details.requestId];
         // return response to first request, with Set-Cookie header removed
         return { responseHeaders: removeResponseHeaders(details, 'Set-Cookie') };
     }
