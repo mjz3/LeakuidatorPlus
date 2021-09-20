@@ -8,19 +8,19 @@ document.addEventListener('DOMContentLoaded', function () {
     chrome.runtime.sendMessage({type: "getMode"}, function(response) {
         if(response != undefined) {
             extMode = response.val;
-            console.log("mode: " + extMode);
+            //console.log("mode: " + extMode);
         }
     })
     chrome.runtime.sendMessage({type: "getSuspiciousList"}, function(response) {
-        console.log("message received in popup!");
+        //console.log("message received in popup!");
         if(response != undefined) {
             if(response.val != undefined) {
-                console.log("response size : " + response.val.length);
+                //console.log("response size : " + response.val.length);
                 createHtmlForSuspiciousList(response.val);
             }
         }
         else {
-            console.log("response size : 0");
+            //console.log("response size : 0");
         }
     });
     //var activeTabId;
@@ -107,7 +107,7 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         let link = document.getElementById(idx+"_exclude");
         
             link.addEventListener('click', function() {
-                console.log("exclude clicked!");
+                //console.log("exclude clicked!");
                 if(extMode == "lax") {
                     chrome.runtime.sendMessage({type: 'excludeSite', source: src, target: trgt}, null);
                 } else {
@@ -120,7 +120,7 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         link = document.getElementById(idx+"_excludeAll");
 
             link.addEventListener('click', function() {
-                console.log("excludeAll clicked!");
+                //console.log("excludeAll clicked!");
                 if(extMode == "lax") {
                     chrome.runtime.sendMessage({type: 'excludeSiteAll', target: trgt}, null);
                 } else {
@@ -132,7 +132,7 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
 
         link = document.getElementById(idx+"_ignore");
             link.addEventListener('click', function() {
-                console.log("ignore clicked!");
+                //console.log("ignore clicked!");
                 if(extMode == "lax") {
                     chrome.runtime.sendMessage({type: 'ignoreSite', source: src, target: trgt}, null);
                 } else {
@@ -145,7 +145,7 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         link = document.getElementById(idx+"_ignoreAll");
         
             link.addEventListener('click', function() {
-                console.log("ignoreAll clicked!");
+                //console.log("ignoreAll clicked!");
                 if(extMode == "lax") {
                     chrome.runtime.sendMessage({type: 'ignoreSiteAll', target: trgt}, null);
                 } else {

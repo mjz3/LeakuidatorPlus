@@ -69,21 +69,17 @@ function init() {
     chrome.tabs.onUpdated.addListener(onTabUpdatedListener);
     chrome.tabs.onRemoved.addListener(onTabRemovedListener);
 
-    chrome.webNavigation.onCompleted.addListener(webNavigationonCompleted,
-        {urls: ['<all_urls>']});
-    chrome.webNavigation.onBeforeNavigate.addListener(webNavigationonBeforeNavigate,
-        {urls: ['<all_urls>']});
-    chrome.webNavigation.onCommitted.addListener(webNavigationonCommitted,
-        {urls: ['<all_urls>']});
-    chrome.webNavigation.onCreatedNavigationTarget.addListener(weNavigationonCreatedNavigationTarget,
-        {urls: ['<all_urls>']});
+    chrome.webNavigation.onCompleted.addListener(webNavigationonCompleted);
+    chrome.webNavigation.onBeforeNavigate.addListener(webNavigationonBeforeNavigate);
+    chrome.webNavigation.onCommitted.addListener(webNavigationonCommitted);
+    chrome.webNavigation.onCreatedNavigationTarget.addListener(weNavigationonCreatedNavigationTarget);
     
     //chrome.webRequest.onBeforeRequest.addListener(onBeforeRequest,
         //{urls: ["https://*/*"]}, [ 'blocking', 'requestBody' ]);
     chrome.webRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders,
-        {urls: ["https://*/*"]}, ['blocking', 'requestHeaders', 'extraHeaders']);
+        {urls: ["https://*/*"]}, ['blocking', 'requestHeaders']);
     chrome.webRequest.onHeadersReceived.addListener(onHeadersReceived,
-        {urls: ["https://*/*"]}, ['blocking', 'responseHeaders', 'extraHeaders']);
+        {urls: ["https://*/*"]}, ['blocking', 'responseHeaders']);
     
     chrome.runtime.onMessage.addListener(runtimeonMessage);
 };
@@ -246,7 +242,7 @@ function onBeforeSendHeaders(details) {
 
     // condition 4: check if request contains cookies
     if(!headerExists(details, "Cookie")) {
-        console.log(details.requestId + " " + details.url + " no cookies!");
+        //console.log(details.requestId + " " + details.url + " no cookies!");
         // lacks root cause of leaky resource attacks
         //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
@@ -293,7 +289,7 @@ function onBeforeSendHeaders(details) {
             startsWith(tabUrl[details.tabId].toLowerCase(), "chrome://newtab/") == true ||
             startsWith(tabUrl[details.tabId].toLowerCase(), "chrome-extension://") == true ||
             startsWith(tabUrl[details.tabId].toLowerCase(), "edge://newtab/") == true) {
-                console.log(details.requestId + " " + details.url + " new tab!");
+                //console.log(details.requestId + " " + details.url + " new tab!");
             //delete requestBody[details.requestId];
             return { requestHeaders: details.requestHeaders };
         }
@@ -322,7 +318,7 @@ function onBeforeSendHeaders(details) {
             } else {
                 src = srctmp;
             }
-            console.log(details.requestId + " " + details.url + " related tabid:" + tabrelations[details.tabId][i] + " url: " + src);
+            //console.log(details.requestId + " " + details.url + " related tabid:" + tabrelations[details.tabId][i] + " url: " + src);
             sourceSite = getSiteFromUrl(src);
             sourceOrigin = combineOrigin(getOriginFromUrl(src));
             if(extensionMode == "lax") {
@@ -343,7 +339,7 @@ function onBeforeSendHeaders(details) {
     }
 
     if(!modeConditions) {
-        console.log(details.requestId + " " + details.url + " mode conditions false! src: " + src + " and the relations: " + tabrelations[details.tabId]);
+        //console.log(details.requestId + " " + details.url + " mode conditions false! src: " + src + " and the relations: " + tabrelations[details.tabId]);
         //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
