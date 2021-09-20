@@ -9,7 +9,7 @@ var tabUrl = []; // current url of tab
 //var requestReferer= [];
 var navigation = [];
 var tabPendingUrl = []; // is the tab in a pending state?
-var requestBody = []; // body of request - extracted from first request - is needed to make second request
+//var requestBody = []; // body of request - extracted from first request - is needed to make second request
 var corwc = []; // check if it's cross origin request with cookie
 var firstResponseHeaders = []; // response headers for the first requests with cookies removed
 var xhrData = []; // data related to second request with cookies included
@@ -78,8 +78,8 @@ function init() {
     chrome.webNavigation.onCreatedNavigationTarget.addListener(weNavigationonCreatedNavigationTarget,
         {urls: ['<all_urls>']});
     
-    chrome.webRequest.onBeforeRequest.addListener(onBeforeRequest,
-        {urls: ["https://*/*"]}, [ 'blocking', 'requestBody' ]);
+    //chrome.webRequest.onBeforeRequest.addListener(onBeforeRequest,
+        //{urls: ["https://*/*"]}, [ 'blocking', 'requestBody' ]);
     chrome.webRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders,
         {urls: ["https://*/*"]}, ['blocking', 'requestHeaders', 'extraHeaders']);
     chrome.webRequest.onHeadersReceived.addListener(onHeadersReceived,
@@ -208,6 +208,7 @@ function webNavigationonCompleted(details) {
  * @todo make sure you remove the request body at the end of request cycle
  * @param {request details} details 
  */
+/*
 function onBeforeRequest(details) {
     try {
         requestBody[details.requestId] = ( isEmpty(details.requestBody) || isEmpty(details.requestBody.raw || isEmpty(isEmpty(details.requestBody.raw[0]))) ? undefined : decodeURIComponent(String.fromCharCode.apply(null,
@@ -216,6 +217,7 @@ function onBeforeRequest(details) {
         requestBody[details.requestId] = undefined;
     }
 };
+*/
 
 /**
  * - check if a request is suspicious, based on 7 conditions
@@ -225,7 +227,7 @@ function onBeforeRequest(details) {
 function onBeforeSendHeaders(details) {
 
     if(details.tabId == -1) {
-        delete requestBody[details.requestId];
+        //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
 
@@ -238,7 +240,7 @@ function onBeforeSendHeaders(details) {
     if(method == undefined /*||
     ((method.toLowerCase() != "get") && (method.toLowerCase() != "head"))*/){
         //console.log(details.requestId + " " + details.url + " method undefined!");
-        delete requestBody[details.requestId];
+        //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders};
     }
 
@@ -246,7 +248,7 @@ function onBeforeSendHeaders(details) {
     if(!headerExists(details, "Cookie")) {
         console.log(details.requestId + " " + details.url + " no cookies!");
         // lacks root cause of leaky resource attacks
-        delete requestBody[details.requestId];
+        //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
 
@@ -292,7 +294,7 @@ function onBeforeSendHeaders(details) {
             startsWith(tabUrl[details.tabId].toLowerCase(), "chrome-extension://") == true ||
             startsWith(tabUrl[details.tabId].toLowerCase(), "edge://newtab/") == true) {
                 console.log(details.requestId + " " + details.url + " new tab!");
-            delete requestBody[details.requestId];
+            //delete requestBody[details.requestId];
             return { requestHeaders: details.requestHeaders };
         }
 
@@ -342,7 +344,7 @@ function onBeforeSendHeaders(details) {
 
     if(!modeConditions) {
         console.log(details.requestId + " " + details.url + " mode conditions false! src: " + src + " and the relations: " + tabrelations[details.tabId]);
-        delete requestBody[details.requestId];
+        //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
 
@@ -351,7 +353,7 @@ function onBeforeSendHeaders(details) {
         (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
     if(excludeFlag) {
         //console.log(details.requestId + " " + details.url + " excluded!");
-        delete requestBody[details.requestId];
+        //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
     
@@ -371,7 +373,7 @@ function onBeforeSendHeaders(details) {
         xhrData[details.requestId].id = details.requestId;
         xhrData[details.requestId].method = details.method;
         xhrData[details.requestId].headers = copiedHeaders;
-        xhrData[details.requestId].body = requestBody[details.requestId];
+        //xhrData[details.requestId].body = requestBody[details.requestId];
         xhrData[details.requestId].tabId = details.tabId;
         xhrData[details.requestId].source = src;
         xhrData[details.requestId].target = trgt;    
@@ -379,7 +381,7 @@ function onBeforeSendHeaders(details) {
         occured[details.requestId] = true;
     }
     
-    delete requestBody[details.requestId];
+    //delete requestBody[details.requestId];
     ////console.log(details.requestId + " origin: " + originDomain + " target: " + targetDomain + " onBeforeSendHeaders: modified first request!");
 
     // let the first request go through, with cookies removed
@@ -679,7 +681,7 @@ function xhRequest(rId) {
     //console.log("parse: " + requestOnedata.body);
     //console.log("stringify: " + JSON.stringify(requestOnedata.body));
     // add request body
-    let params = isEmpty(requestOnedata.body) ? null : requestOnedata.body;
+    //let params = isEmpty(requestOnedata.body) ? null : requestOnedata.body;
 
     // add a listener to compare two responses,
     // upon arrival of second response
@@ -819,7 +821,7 @@ function xhRequest(rId) {
     }
 
     // send the second request with cookies
-    request.send(params);
+    request.send(/*params*/);
 };
 
 /**
