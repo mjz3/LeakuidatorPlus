@@ -2,12 +2,11 @@
 
 // chrome doesn't allow extensions to set unsafe headers for a request
 // list of forbidden headers based on this spec: https://fetch.spec.whatwg.org/#forbidden-header-name
-var unsafeHeaders = [ 'Accept-Charset', 'Accept-Encoding', 'Access-Control-Request-Headers', 'Access-Control-Request-Method',
-                        'Connection', 'Content-Length', 'Cookie', 'Cookie2', 'Date', 'DNT', 'Expect', 'Host', 'Keep-Alive', 'Origin',
-                        'Referer', 'TE', 'Trailer', 'Transfer-Encoding', 'Upgrade', 'Via' , 'Proxy-', 'Sec-', 'User-Agent' ];
+var unsafeHeaders = [ 'accept-charset', 'accept-encoding', 'access-control-request-headers', 'access-control-request-method',
+                        'connection', 'content-length', 'cookie', 'cookie2', 'date', 'dnt', 'expect', 'host', 'keep-alive', 'origin',
+                        'referer', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'via' , 'proxy-', 'sec-', 'user-agent' ];
 // User-Agent was not listed in ref page, but chrome doesn't allow it to be set by js.
 var unsafeHeadersStart = [ 'Proxy-', 'Sec-' ];
-
 
 function headerValue(array, key){
     for(let i = 0, l = array.length; i < l; i++)
@@ -20,17 +19,31 @@ function headerValue(array, key){
     return undefined;
 }
 function headerValue2(array, key){
-    let value = array.get(key);
+    /*let value = array.get(key);
     if(value != undefined && value != null)
     {
         return value.toLowerCase();
+    }*/
+    for (let hdr of array) {
+        if (hdr.name.toLowerCase() == key.toLowerCase()) {
+            if(hdr.value != undefined && hdr.value != null) {
+                return hdr.value.toLowerCase();
+            } else {
+                return undefined;
+            }
+        }
     }
     return undefined;
 }
 
 function headerExists(details, key){
-    for (let i = 0; i < details.requestHeaders.length; ++i) {
+    /*for (let i = 0; i < details.requestHeaders.length; ++i) {
         if (details.requestHeaders[i].name.toLowerCase() == key.toLowerCase()) {
+            return true;
+        }
+    }*/
+    for (let hdr of details.requestHeaders) {
+        if (hdr.name.toLowerCase() == key.toLowerCase()) {
             return true;
         }
     }
@@ -103,8 +116,13 @@ function startsWith(str1, str2) {
  */
 function returnHeaders(details) {
     let copiedHeaders = [];
-    for(let i = 0; i < details.requestHeaders.length; i++) {
+    /*for(let i = 0; i < details.requestHeaders.length; i++) {
         copiedHeaders.push(details.requestHeaders[i]);
+    }*/
+    for(let hdr of details.requestHeaders) {
+        if(!unsafeHeaders.includes(hdr.name.toLowerCase())) {
+            copiedHeaders.push(hdr);
+        }
     }
     return copiedHeaders
 }
@@ -118,23 +136,23 @@ function trimUnsafeHeaders(inputHeaders) {
     let trimmedHeaders = [];
     let flg = false;
     for (let i = 0; i < inputHeaders.length; ++i) {
-        for(let j = 0; j < unsafeHeaders.length; ++j) {
+        /*for(let j = 0; j < unsafeHeaders.length; ++j) {
             if(inputHeaders[i] != undefined) {
                 if (inputHeaders[i].name.toLowerCase() == unsafeHeaders[j].toLowerCase()) {
                     flg = true;
                     break;
                 }
             }
-        }
+        }*/
 
-        if(!flg) {
-            for(var j = 0; j < unsafeHeadersStart.length; ++j) {
-                if (startsWith(inputHeaders[i].name.toLowerCase(), unsafeHeadersStart[j].toLowerCase()) == true) {
-                    flg = true;
-                    break;
-                }
+        //if(!flg) {
+        for(var j = 0; j < unsafeHeadersStart.length; ++j) {
+            if (startsWith(inputHeaders[i].name.toLowerCase(), unsafeHeadersStart[j].toLowerCase()) == true) {
+                flg = true;
+                break;
             }
         }
+        //}
 
         if(!flg) {
             trimmedHeaders.push(inputHeaders[i]);
