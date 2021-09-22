@@ -20,6 +20,10 @@ var extensionMode = "lax"; // lax or strict
 
 // name of storage vars
 var keys = ["excludeSite", "excludeOrigin", "ignoreSite", "ignoreOrigin", "mode"];
+
+// headers to be checked for observable difference
+var suspiciousHeaders = [ 'status', 'accept', 'content-encoding', 'content-range', 'content-length', 'host',  'etag' ];
+
 // map of user deciions for ignored requests.
 // ignored requests have the protection but user doesn't get notified
 var ignoreSiteMap = []; // based on URL Site
@@ -393,26 +397,30 @@ function onBeforeSendHeaders(details) {
  */
 function onHeadersReceived(details) {
     // check if it was marked as suspicious
-    if(corwc[details.requestId] && !occured[details.requestId]) {
+    if(corwc[details.requestId]) {
         // if there are multiple events fired for one requestId,
         // evaluate them only once (tracked with occured variable)
         // so corwc requests are evaluated only one time for
         // the distinguishable  differences
+        if(!occured[details.requestId]) {
+            // store response headers into memory for later use by @xhRequest
+            firstResponseHeaders[details.requestId] = [];
+            for(var i = 0, l = details.responseHeaders.length; i < l; i++) {
+                let hdr = details.responseHeaders[i].name.toLowerCase();
+                if(suspiciousHeaders.includes(hdr)) {
+                    firstResponseHeaders[details.requestId][hdr] = details.responseHeaders[i].value.toLowerCase();
+                }
+            }
 
-        // store response headers into memory for later use by @xhRequest
-        firstResponseHeaders[details.requestId] = [];
-        for(var i = 0, l = details.responseHeaders.length; i < l; i++) {
-            firstResponseHeaders[details.requestId][details.responseHeaders[i].name.toLowerCase()] = details.responseHeaders[i].value.toLowerCase();
+            //console.log(details.requestId + " going to xhr from " + xhrData[details.requestId].source + " to " + xhrData[details.requestId].target);
+            //susCount++;
+            //console.log('suspicious # ' + susCount + ' from ' + xhrData[details.requestId].source);
+
+            // make the second request, with cookies
+            //xhRequest(firstResponseHeaders[details.requestId], xhrData[details.requestId]);
+            setTimeout(xhRequest, Math.random() * 1000, details.requestId);
+            //delete corwc[details.requestId];
         }
-
-        //console.log(details.requestId + " going to xhr from " + xhrData[details.requestId].source + " to " + xhrData[details.requestId].target);
-        //susCount++;
-        //console.log('suspicious # ' + susCount + ' from ' + xhrData[details.requestId].source);
-
-        // make the second request, with cookies
-        //xhRequest(firstResponseHeaders[details.requestId], xhrData[details.requestId]);
-        setTimeout(xhRequest, Math.random() * 1000, details.requestId);
-        //delete corwc[details.requestId];
         // return response to first request, with Set-Cookie header removed
         return { responseHeaders: removeResponseHeaders(details, 'Set-Cookie') };
     }
