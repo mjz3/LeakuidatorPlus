@@ -156,7 +156,9 @@ function weNavigationonCreatedNavigationTarget(details) {
         tabrelations[details.sourceTabId] = [];
      }
     
-    //tabUrl[details.tabId] = tab.url;
+    if(details.frameId == 0) {
+        tabUrl[details.tabId] = details.url;
+    }
     
     tabrelations[details.tabId].push(details.sourceTabId);
     tabrelations[details.sourceTabId].push(details.tabId);
@@ -172,6 +174,7 @@ function weNavigationonCreatedNavigationTarget(details) {
 function webNavigationonBeforeNavigate(details){
     if(details.frameId == 0) {
         navigation[details.tabId] = true;
+        tabUrl[details.tabId] = details.url;
     }
 };
 
@@ -182,6 +185,7 @@ function webNavigationonBeforeNavigate(details){
 function webNavigationonCommitted(details){
     if(details.frameId == 0) {
         delete navigation[details.tabId];
+        tabUrl[details.tabId] = details.url;
     }
 };
 
@@ -199,6 +203,8 @@ function webNavigationonCompleted(details) {
         } else if(extensionMode == "strict"){
             dangerousMapPerTab[details.tabId] = purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeOriginMap, ignoreOriginMap);
         }
+
+        tabUrl[details.tabId] = details.url;
 
         // set notification for user
         chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
@@ -235,9 +241,7 @@ function onBeforeSendHeaders(details) {
         return { requestHeaders: details.requestHeaders };
     }
 
-    //console.log(details.requestId + " " + details.url + " tab: " + details.tabId + " tabulr: " + tabUrl[details.tabId] + " urlToTab: " + urlToTab[getSiteFromUrl(tabUrl[details.tabId])]);
-    
-    
+    //console.log(details.requestId + " " + details.url + " tab: " + details.tabId + " taburl: " + tabUrl[details.tabId]);
     
     // condition 0: check if it is a GET or HEAD request
     let method = details.method;
@@ -262,16 +266,29 @@ function onBeforeSendHeaders(details) {
     let fetchMode = headerValue(details.requestHeaders, "Sec-Fetch-Mode");
 
     // condition 5: chech if the request is navigation to a document
-    /*
-    if(fetchMode == "navigate" && fetchDest == "document" && !tabrelations[details.tabId]) {
-        console.log(details.requestId + " " + details.url + "navigate and document!");
-        // corresponds to allowed SameSite=Lax conditions, and are excempted from protection
-        delete requestBody[details.requestId];
-        return { requestHeaders: details.requestHeaders };
-    }
-    */
 
-    
+    // check if the page is navigating
+    // if so, there are two cases:
+    // 1: there is no relation with any other tab,
+    // so the request can be excluded from protection,
+    // because nothing can be learned after navigation
+    // 2: if there is a relation with another tab,
+    // the protection should be active against those tabs,
+    // because another tab may learn something from
+    // this tab after navigation
+    let navigationFlag = false;
+    if(fetchMode == "navigate" && fetchDest == "document") {
+        //console.log(details.requestId + " " + details.url + "navigate and document! navigating to " + tabUrl[details.tabId] +
+        //" and relations are " + tabrelations[details.tabId]);
+        // corresponds to allowed SameSite=Lax conditions, and are excempted from protection
+        //delete requestBody[details.requestId];
+        if(tabrelations[details.tabId]) {
+            navigationFlag = true;
+        } else {
+            return { requestHeaders: details.requestHeaders };
+        }
+    }
+
     // extract information about target of request
     let trgt = details.url;
     let targetSite = getSiteFromUrl(trgt);
@@ -283,12 +300,11 @@ function onBeforeSendHeaders(details) {
     let sourceSite = getSiteFromUrl(src);
     let sourceOrigin = combineOrigin(getOriginFromUrl(src));
 
-    
     // condition 6: check if it is a cross-site/cross-origin request
     let modeConditions = false;
 
     // condition 1: check if tab URL is determined
-    if(tabUrl[details.tabId]) {
+    if(tabUrl[details.tabId] && !navigationFlag) {
         // condition 2: check if the tab is in navigation state, and
         // condition 3: whether the tab URL is valid
         if((navigation[details.tabId] == true && !tabrelations[details.tabId]) ||
@@ -320,7 +336,8 @@ function onBeforeSendHeaders(details) {
         for(let i = 0; i < tabrelations[details.tabId].length && !modeConditions; i++) 
         {
             let srctmp = tabUrl[tabrelations[details.tabId][i]];
-            //console.log("related tab: " + tabrelations[details.tabId][i] + " its url: " + tabUrl[tabrelations[details.tabId][i]]);
+            //console.log("related tab: " + tabrelations[details.tabId][i] + " its url: " + tabUrl[tabrelations[details.tabId][i]] +
+            //" if pending url :" + tabPendingUrl[tabrelations[details.tabId][i]]);
             if(!srctmp) {
                 continue;
             } else {
