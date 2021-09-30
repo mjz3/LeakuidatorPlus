@@ -424,13 +424,31 @@ function onHeadersReceived(details) {
         // so corwc requests are evaluated only one time for
         // the distinguishable  differences
         if(!occured[details.requestId]) {
-            setTimeout(delayedRequest, Math.random() * 1000, details);
+            //setTimeout(delayedRequest, Math.random() * 1000, details);
+            // store response headers into memory for later use by @xhRequest
+            firstResponseHeaders[details.requestId] = [];
+            for(var i = 0, l = details.responseHeaders.length; i < l; i++) {
+                let hdr = details.responseHeaders[i].name.toLowerCase();
+                if(suspiciousHeaders.includes(hdr)) {
+                    firstResponseHeaders[details.requestId][hdr] = details.responseHeaders[i].value.toLowerCase();
+                    //console.log(dt.requestId + " name: " + hdr + " value : " + firstResponseHeaders[dt.requestId][hdr]);
+                }
+            }
+
+            //console.log(details.requestId + " going to xhr from " + xhrData[details.requestId].source + " to " + xhrData[details.requestId].target);
+            //susCount++;
+            //console.log('suspicious # ' + susCount + ' from ' + xhrData[details.requestId].source);
+
+            // make the second request, with cookies
+            //xhRequest(dt.requestId);
+            setTimeout(xhRequest, Math.random() * 1000, details.requestId);
+            //delete corwc[details.requestId];
         }
         // return response to first request, with Set-Cookie header removed
         return { responseHeaders: removeResponseHeaders(details, 'Set-Cookie') };
     }
 };
-
+/*
 function delayedRequest(dt) {
     // store response headers into memory for later use by @xhRequest
     firstResponseHeaders[dt.requestId] = [];
@@ -451,7 +469,7 @@ function delayedRequest(dt) {
     //setTimeout(xhRequest, Math.random() * 1000, details.requestId);
     //delete corwc[details.requestId];
 }
-
+*/
 /**
  * Listen to messages from the content script and popup page
  * @param {message received} msg 
