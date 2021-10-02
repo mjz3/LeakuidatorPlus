@@ -145,17 +145,23 @@ function onTabRemovedListener(tabId) {
 
 
 function weNavigationonCreatedNavigationTarget(details) {
-    if(isEmpty(tabrelations[details.tabId])) {
-        tabrelations[details.tabId] = [];
-     }
-     if(isEmpty(tabrelations[details.sourceTabId])) {
-        tabrelations[details.sourceTabId] = [];
-     }
-    
-    //tabUrl[details.tabId] = tab.url;
-    
-    tabrelations[details.tabId].push(details.sourceTabId);
-    tabrelations[details.sourceTabId].push(details.tabId);
+
+    if(details.frameId == 0) {
+        tabUrl[details.tabId] = details.url;
+    }
+
+    if(details.tabId != details.sourceTabId) {
+        if(isEmpty(tabrelations[details.tabId])) {
+            tabrelations[details.tabId] = [];
+         }
+         if(isEmpty(tabrelations[details.sourceTabId])) {
+            tabrelations[details.sourceTabId] = [];
+         }
+
+        tabrelations[details.tabId].push(details.sourceTabId);
+        tabrelations[details.sourceTabId].push(details.tabId);
+    }
+    //console.log(details.processId + " weNavigationonCreatedNavigationTarget " + details.url);
 
     //console.log("weNavigationonCreatedNavigationTarget event: tab id: " + details.tabId + " the array: " + tabrelations[details.tabId] + " taburl: " + tabUrl[details.tabId]);
     //console.log("weNavigationonCreatedNavigationTarget event: tab oppener id: " + details.sourceTabId + " the array: " + tabrelations[details.sourceTabId] + " taburl: " + tabUrl[details.sourceTabId]);
@@ -168,7 +174,9 @@ function weNavigationonCreatedNavigationTarget(details) {
 function webNavigationonBeforeNavigate(details){
     if(details.frameId == 0) {
         navigation[details.tabId] = true;
+        tabUrl[details.tabId] = details.url;
     }
+    //console.log(details.processId + "webNavigationonBeforeNavigate " + details.url);
 };
 
 /**
@@ -178,7 +186,27 @@ function webNavigationonBeforeNavigate(details){
 function webNavigationonCommitted(details){
     if(details.frameId == 0) {
         delete navigation[details.tabId];
+        tabUrl[details.tabId] = details.url;
+
+        // if transision type is not link, remove this tab from relations
+        let tqf = ["forward_back", "from_address_bar"];
+        if(tabrelations[details.tabId] &&
+            !(details.transitionType == "link" && !details.transitionQualifiers.some(r => tqf.indexOf(r) >= 0))) {
+
+            for (let i = 0; i < tabrelations[details.tabId].length; ++i) {
+                const relatedTab = tabrelations[details.tabId][i];
+                if(tabrelations[relatedTab]) {
+                    tabrelations[relatedTab] = tabrelations[relatedTab].filter(function(x) {
+                        return x !== details.tabId;
+                    });
+                }
+            }
+
+            tabrelations[details.tabId] = [];
+        }
+
     }
+    //console.log(details.processId + "webNavigationonCommitted; " + " frameid: " + details.frameId + " url: " + details.url + " transitionQualifiers: " + details.transitionQualifiers + ", TransitionType: " + details.transitionType);
 };
 
 /**
@@ -196,11 +224,14 @@ function webNavigationonCompleted(details) {
             dangerousMapPerTab[details.tabId] = purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeOriginMap, ignoreOriginMap);
         }
 
+        tabUrl[details.tabId] = details.url;
+
         // set notification for user
         chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
         var number  = isEmpty(dangerousMapPerTab[details.tabId]) ? 0 : dangerousMapPerTab[details.tabId].length;
         chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
     }
+    //console.log(details.processId + " webNavigationonCompleted " + details.url);
 };
 
 /**
@@ -226,14 +257,14 @@ function onBeforeRequest(details) {
  */
 function onBeforeSendHeaders(details) {
 
+    //console.log(details.requestId + " onBeforeSendHeaders " + " request url " + details.url + " webnavigation url: " + tabUrl[details.tabId] + " related tabs: " + tabrelations[details.tabId]);
+
     if(details.tabId == -1) {
         //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
 
-    //console.log(details.requestId + " " + details.url + " tab: " + details.tabId + " tabulr: " + tabUrl[details.tabId] + " urlToTab: " + urlToTab[getSiteFromUrl(tabUrl[details.tabId])]);
-    
-    
+    //console.log(details.requestId + " " + details.url + " tab: " + details.tabId + " taburl: " + tabUrl[details.tabId]);
     
     // condition 0: check if it is a GET or HEAD request
     let method = details.method;
@@ -258,16 +289,29 @@ function onBeforeSendHeaders(details) {
     let fetchMode = headerValue(details.requestHeaders, "Sec-Fetch-Mode");
 
     // condition 5: chech if the request is navigation to a document
-    /*
-    if(fetchMode == "navigate" && fetchDest == "document" && !tabrelations[details.tabId]) {
-        console.log(details.requestId + " " + details.url + "navigate and document!");
-        // corresponds to allowed SameSite=Lax conditions, and are excempted from protection
-        delete requestBody[details.requestId];
-        return { requestHeaders: details.requestHeaders };
-    }
-    */
 
-    
+    // check if the page is navigating
+    // if so, there are two cases:
+    // 1: there is no relation with any other tab,
+    // so the request can be excluded from protection,
+    // because nothing can be learned after navigation
+    // 2: if there is a relation with another tab,
+    // the protection should be active against those tabs,
+    // because another tab may learn something from
+    // this tab after navigation
+    let navigationFlag = false;
+    if(fetchMode == "navigate" && fetchDest == "document") {
+        //console.log(details.requestId + " " + details.url + "navigate and document! navigating to " + tabUrl[details.tabId] +
+        //" and relations are " + tabrelations[details.tabId]);
+        // corresponds to allowed SameSite=Lax conditions, and are excempted from protection
+        //delete requestBody[details.requestId];
+        if(tabrelations[details.tabId]) {
+            navigationFlag = true;
+        } else {
+            return { requestHeaders: details.requestHeaders };
+        }
+    }
+
     // extract information about target of request
     let trgt = details.url;
     let targetSite = getSiteFromUrl(trgt);
@@ -279,12 +323,11 @@ function onBeforeSendHeaders(details) {
     let sourceSite = getSiteFromUrl(src);
     let sourceOrigin = combineOrigin(getOriginFromUrl(src));
 
-    
     // condition 6: check if it is a cross-site/cross-origin request
     let modeConditions = false;
 
     // condition 1: check if tab URL is determined
-    if(tabUrl[details.tabId]) {
+    if(tabUrl[details.tabId] && !navigationFlag) {
         // condition 2: check if the tab is in navigation state, and
         // condition 3: whether the tab URL is valid
         if((navigation[details.tabId] == true && !tabrelations[details.tabId]) ||
@@ -311,12 +354,23 @@ function onBeforeSendHeaders(details) {
         }
     }
 
+    let excludeFlag;
+    if(modeConditions) {
+        // condition 7: check if request was excluded from protection, by a past user decision
+        excludeFlag  = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+        (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+        if(excludeFlag) {
+            modeConditions = false;
+        }
+    }
+
     if(!modeConditions && tabrelations[details.tabId]) {
         
         for(let i = 0; i < tabrelations[details.tabId].length && !modeConditions; i++) 
         {
             let srctmp = tabUrl[tabrelations[details.tabId][i]];
-            //console.log("related tab: " + tabrelations[details.tabId][i] + " its url: " + tabUrl[tabrelations[details.tabId][i]]);
+            //console.log("related tab: " + tabrelations[details.tabId][i] + " its url: " + tabUrl[tabrelations[details.tabId][i]] +
+            //" if pending url :" + tabPendingUrl[tabrelations[details.tabId][i]]);
             if(!srctmp) {
                 continue;
             } else {
@@ -325,6 +379,15 @@ function onBeforeSendHeaders(details) {
             //console.log(details.requestId + " " + details.url + " related tabid:" + tabrelations[details.tabId][i] + " url: " + src);
             sourceSite = getSiteFromUrl(src);
             sourceOrigin = combineOrigin(getOriginFromUrl(src));
+
+
+            excludeFlag  = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+            (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+
+            if(excludeFlag) {
+                continue;
+            }
+
             if(extensionMode == "lax") {
                 // check lax conditions on the request
                 if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
@@ -347,15 +410,6 @@ function onBeforeSendHeaders(details) {
         //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
-
-    // condition 7: check if request was excluded from protection, by a past user decision
-    let excludeFlag = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
-        (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
-    if(excludeFlag) {
-        //console.log(details.requestId + " " + details.url + " excluded!");
-        //delete requestBody[details.requestId];
-        return { requestHeaders: details.requestHeaders };
-    }
     
     // if survived the 7 conditions, mark the request as suspicious
     if(!corwc[details.requestId]) {
@@ -365,14 +419,14 @@ function onBeforeSendHeaders(details) {
             " fetchSite " + fetchSite + " fetchDest: " + fetchDest +  " from " + src + " to " + trgt);*/
         
         // copy headers to a new array, to survive
-        let copiedHeaders = returnHeaders(details);
+        //let copiedHeaders = returnHeaders(details);
         
 
         // store first request data, to be used by @xhRequest
         xhrData[details.requestId] = [];
         xhrData[details.requestId].id = details.requestId;
-        xhrData[details.requestId].method = details.method;
-        xhrData[details.requestId].headers = copiedHeaders;
+        //xhrData[details.requestId].method = details.method;
+        //xhrData[details.requestId].headers = copiedHeaders;
         //xhrData[details.requestId].body = requestBody[details.requestId];
         xhrData[details.requestId].tabId = details.tabId;
         xhrData[details.requestId].source = src;
@@ -385,6 +439,7 @@ function onBeforeSendHeaders(details) {
     ////console.log(details.requestId + " origin: " + originDomain + " target: " + targetDomain + " onBeforeSendHeaders: modified first request!");
 
     // let the first request go through, with cookies removed
+    //console.log(details.requestId + " cookie removed! " + " source: " + src + " target: " + trgt);
     return { requestHeaders: removeRequestHeaders(details, 'Cookie') };
 };
 
@@ -396,6 +451,7 @@ function onBeforeSendHeaders(details) {
  * @param {details of the request} details 
  */
 function onHeadersReceived(details) {
+    //console.log(details.requestId + " onHeadersReceived " + " request url " + details.url + " webnavigation url: " + tabUrl[details.tabId]);
     // check if it was marked as suspicious
     if(corwc[details.requestId]) {
         // if there are multiple events fired for one requestId,
@@ -403,12 +459,14 @@ function onHeadersReceived(details) {
         // so corwc requests are evaluated only one time for
         // the distinguishable  differences
         if(!occured[details.requestId]) {
+            //setTimeout(delayedRequest, Math.random() * 1000, details);
             // store response headers into memory for later use by @xhRequest
             firstResponseHeaders[details.requestId] = [];
             for(var i = 0, l = details.responseHeaders.length; i < l; i++) {
                 let hdr = details.responseHeaders[i].name.toLowerCase();
                 if(suspiciousHeaders.includes(hdr)) {
                     firstResponseHeaders[details.requestId][hdr] = details.responseHeaders[i].value.toLowerCase();
+                    //console.log(dt.requestId + " name: " + hdr + " value : " + firstResponseHeaders[dt.requestId][hdr]);
                 }
             }
 
@@ -417,7 +475,7 @@ function onHeadersReceived(details) {
             //console.log('suspicious # ' + susCount + ' from ' + xhrData[details.requestId].source);
 
             // make the second request, with cookies
-            //xhRequest(firstResponseHeaders[details.requestId], xhrData[details.requestId]);
+            //xhRequest(dt.requestId);
             setTimeout(xhRequest, Math.random() * 1000, details.requestId);
             //delete corwc[details.requestId];
         }
@@ -425,7 +483,28 @@ function onHeadersReceived(details) {
         return { responseHeaders: removeResponseHeaders(details, 'Set-Cookie') };
     }
 };
+/*
+function delayedRequest(dt) {
+    // store response headers into memory for later use by @xhRequest
+    firstResponseHeaders[dt.requestId] = [];
+    for(var i = 0, l = dt.responseHeaders.length; i < l; i++) {
+        let hdr = dt.responseHeaders[i].name.toLowerCase();
+        if(suspiciousHeaders.includes(hdr)) {
+            firstResponseHeaders[dt.requestId][hdr] = dt.responseHeaders[i].value.toLowerCase();
+            //console.log(dt.requestId + " name: " + hdr + " value : " + firstResponseHeaders[dt.requestId][hdr]);
+        }
+    }
 
+    //console.log(details.requestId + " going to xhr from " + xhrData[details.requestId].source + " to " + xhrData[details.requestId].target);
+    //susCount++;
+    //console.log('suspicious # ' + susCount + ' from ' + xhrData[details.requestId].source);
+
+    // make the second request, with cookies
+    xhRequest(dt.requestId);
+    //setTimeout(xhRequest, Math.random() * 1000, details.requestId);
+    //delete corwc[details.requestId];
+}
+*/
 /**
  * Listen to messages from the content script and popup page
  * @param {message received} msg 
@@ -655,14 +734,14 @@ function xhRequest(rId) {
     let responseOneData = firstResponseHeaders[rId];
     let requestOnedata = xhrData[rId];
     // extract the request headers that are not unsafe
-    requestOnedata.headers = trimUnsafeHeaders(requestOnedata.headers);
+    //requestOnedata.headers = trimUnsafeHeaders(requestOnedata.headers);
 
     // prepare an instance of XMLHttpRequest, for a second request with cookies
     let request = new XMLHttpRequest();
     request.open('HEAD'/*requestOnedata.method*/, requestOnedata.target, true);
 
     // set request headers, identical to first request
-    for (let i = 0; i < requestOnedata.headers.length; ++i) {
+    /*for (let i = 0; i < requestOnedata.headers.length; ++i) {
         try {
             request.setRequestHeader(requestOnedata.headers[i].name, requestOnedata.headers[i].value);
             //console.log(data.id + " xhr " + data.method + " to " + data.target);
@@ -670,7 +749,7 @@ function xhRequest(rId) {
         catch(error) {
             //console.log(data.id + " xhr.setRequestHeader error: " + error);
         }
-    }
+    }*/
 /*
     try {
         request.setRequestHeader('LEAKUIDATOR', 'TRUE');
