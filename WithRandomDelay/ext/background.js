@@ -423,14 +423,14 @@ function onBeforeSendHeaders(details) {
             " fetchSite " + fetchSite + " fetchDest: " + fetchDest +  " from " + src + " to " + trgt);*/
         
         // copy headers to a new array, to survive
-        let copiedHeaders = returnHeaders(details);
+        //let copiedHeaders = returnHeaders(details);
         
 
         // store first request data, to be used by @xhRequest
         xhrData[details.requestId] = [];
         xhrData[details.requestId].id = details.requestId;
-        xhrData[details.requestId].method = details.method;
-        xhrData[details.requestId].headers = copiedHeaders;
+        //xhrData[details.requestId].method = details.method;
+        //xhrData[details.requestId].headers = copiedHeaders;
         //xhrData[details.requestId].body = requestBody[details.requestId];
         xhrData[details.requestId].tabId = details.tabId;
         xhrData[details.requestId].source = src;
@@ -738,14 +738,14 @@ function xhRequest(rId) {
     let responseOneData = firstResponseHeaders[rId];
     let requestOnedata = xhrData[rId];
     // extract the request headers that are not unsafe
-    requestOnedata.headers = trimUnsafeHeaders(requestOnedata.headers);
+    //requestOnedata.headers = trimUnsafeHeaders(requestOnedata.headers);
 
     // prepare an instance of XMLHttpRequest, for a second request with cookies
     let request = new XMLHttpRequest();
     request.open('HEAD'/*requestOnedata.method*/, requestOnedata.target, true);
 
     // set request headers, identical to first request
-    for (let i = 0; i < requestOnedata.headers.length; ++i) {
+    /*for (let i = 0; i < requestOnedata.headers.length; ++i) {
         try {
             request.setRequestHeader(requestOnedata.headers[i].name, requestOnedata.headers[i].value);
             //console.log(data.id + " xhr " + data.method + " to " + data.target);
@@ -753,7 +753,7 @@ function xhRequest(rId) {
         catch(error) {
             //console.log(data.id + " xhr.setRequestHeader error: " + error);
         }
-    }
+    }*/
 /*
     try {
         request.setRequestHeader('LEAKUIDATOR', 'TRUE');
