@@ -149,19 +149,22 @@ function onTabRemovedListener(tabId) {
 
 
 function weNavigationonCreatedNavigationTarget(details) {
-    if(isEmpty(tabrelations[details.tabId])) {
-        tabrelations[details.tabId] = [];
-     }
-     if(isEmpty(tabrelations[details.sourceTabId])) {
-        tabrelations[details.sourceTabId] = [];
-     }
-    
+
     if(details.frameId == 0) {
         tabUrl[details.tabId] = details.url;
     }
-    
-    tabrelations[details.tabId].push(details.sourceTabId);
-    tabrelations[details.sourceTabId].push(details.tabId);
+
+    if(details.tabId != details.sourceTabId) {
+        if(isEmpty(tabrelations[details.tabId])) {
+            tabrelations[details.tabId] = [];
+         }
+         if(isEmpty(tabrelations[details.sourceTabId])) {
+            tabrelations[details.sourceTabId] = [];
+         }
+
+        tabrelations[details.tabId].push(details.sourceTabId);
+        tabrelations[details.sourceTabId].push(details.tabId);
+    }
     //console.log(details.processId + " weNavigationonCreatedNavigationTarget " + details.url);
 
     //console.log("weNavigationonCreatedNavigationTarget event: tab id: " + details.tabId + " the array: " + tabrelations[details.tabId] + " taburl: " + tabUrl[details.tabId]);
