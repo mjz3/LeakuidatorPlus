@@ -24,6 +24,9 @@ var keys = ["excludeSite", "excludeOrigin", "ignoreSite", "ignoreOrigin", "mode"
 // headers to be checked for observable difference
 var suspiciousHeaders = [ 'status', 'accept', 'content-encoding', 'content-range', 'content-length', 'host',  'etag' ];
 
+
+var tqf = ["forward_back", "from_address_bar"];
+
 // map of user deciions for ignored requests.
 // ignored requests have the protection but user doesn't get notified
 var ignoreSiteMap = []; // based on URL Site
@@ -189,10 +192,9 @@ function webNavigationonCommitted(details){
         tabUrl[details.tabId] = details.url;
 
         // if transision type is not link, remove this tab from relations
-        let tqf = ["forward_back", "from_address_bar"];
+
         if(tabrelations[details.tabId] &&
             !(details.transitionType == "link" && !details.transitionQualifiers.some(r => tqf.indexOf(r) >= 0))) {
-
             for (let i = 0; i < tabrelations[details.tabId].length; ++i) {
                 const relatedTab = tabrelations[details.tabId][i];
                 if(tabrelations[relatedTab]) {
@@ -202,9 +204,8 @@ function webNavigationonCommitted(details){
                 }
             }
 
-            tabrelations[details.tabId] = [];
+            delete tabrelations[details.tabId];
         }
-
     }
     //console.log(details.processId + "webNavigationonCommitted; " + " frameid: " + details.frameId + " url: " + details.url + " transitionQualifiers: " + details.transitionQualifiers + ", TransitionType: " + details.transitionType);
 };
@@ -217,14 +218,15 @@ function webNavigationonCommitted(details){
 function webNavigationonCompleted(details) {
 
     if(details.frameId == 0) {
+
+        tabUrl[details.tabId] = details.url;
+
         // remove user's decided mappings from the list
         if(extensionMode == "lax") {
             dangerousMapPerTab[details.tabId] = purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeSiteMap, ignoreSiteMap);
         } else if(extensionMode == "strict"){
             dangerousMapPerTab[details.tabId] = purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeOriginMap, ignoreOriginMap);
         }
-
-        tabUrl[details.tabId] = details.url;
 
         // set notification for user
         chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
@@ -380,14 +382,6 @@ function onBeforeSendHeaders(details) {
             sourceSite = getSiteFromUrl(src);
             sourceOrigin = combineOrigin(getOriginFromUrl(src));
 
-
-            excludeFlag  = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
-            (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
-
-            if(excludeFlag) {
-                continue;
-            }
-
             if(extensionMode == "lax") {
                 // check lax conditions on the request
                 if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
@@ -399,6 +393,14 @@ function onBeforeSendHeaders(details) {
                     modeConditions = ((!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") || crossOrigin(sourceOrigin, targetOrigin)? true : false);
                 }
             }
+
+            excludeFlag  = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+            (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+
+            if(excludeFlag) {
+                modeConditions = false;
+            }
+
             if(modeConditions) {
                 break;
             }
@@ -459,6 +461,7 @@ function onHeadersReceived(details) {
         // so corwc requests are evaluated only one time for
         // the distinguishable  differences
         if(!occured[details.requestId]) {
+            //occured[details.requestId] = true;
             //setTimeout(delayedRequest, Math.random() * 1000, details);
             // store response headers into memory for later use by @xhRequest
             firstResponseHeaders[details.requestId] = [];
@@ -731,6 +734,7 @@ function saveDecisions() {
  * @param {first request headers} requestOnedata 
  */
 function xhRequest(rId) {
+    //console.log(rId + "xhRequest: ")
     let responseOneData = firstResponseHeaders[rId];
     let requestOnedata = xhrData[rId];
     // extract the request headers that are not unsafe

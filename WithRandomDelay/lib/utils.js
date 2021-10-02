@@ -52,7 +52,7 @@ function headerExists(details, key){
 
 function printHeaders(details){
     for (let i = 0; i < details.requestHeaders.length; ++i) {
-        console.log( details.requestId +  " header name : " + details.requestHeaders[i].name.toLowerCase() + " header value: " + details.requestHeaders[i].value.toLowerCase());
+        //console.log( details.requestId +  " header name : " + details.requestHeaders[i].name.toLowerCase() + " header value: " + details.requestHeaders[i].value.toLowerCase());
     }
 }
 
@@ -288,25 +288,25 @@ function crossOrigin(sourceOrigin, destinationOrigin) {
 function headersEqual(headersOne, headersTwo) {
 
     if(headersOne['status'] != headersTwo['status']) {
-        console.log("diff in status: " + headersOne['status'] + " vs " + headersTwo['status']);
+        //console.log("diff in status: " + headersOne['status'] + " vs " + headersTwo['status']);
         return false;
     } else if(headersOne['accept'] != headersTwo['accept']) {
-        console.log("diff in accept: " + headersOne['accept'] + " vs " + headersTwo['accept']);
+        //console.log("diff in accept: " + headersOne['accept'] + " vs " + headersTwo['accept']);
         return false;
     } else if(headersOne['content-encoding'] != headersTwo['content-encoding']) {
-        console.log("diff in content-encoding: " + headersOne['content-encoding'] + " vs " + headersTwo['content-encoding']);
+        //console.log("diff in content-encoding: " + headersOne['content-encoding'] + " vs " + headersTwo['content-encoding']);
         return false;
     } else if(headersOne['content-range'] != headersTwo['content-range']) {
-        console.log("diff in content-range: " + headersOne['content-range'] + " vs " + headersTwo['content-range']);
+        //console.log("diff in content-range: " + headersOne['content-range'] + " vs " + headersTwo['content-range']);
         return false;
     } else if(headersOne['content-length'] != headersTwo['content-length']) {
-        console.log("diff in content-length: " + headersOne['content-length'] + " vs " + headersTwo['content-length']);
+        //console.log("diff in content-length: " + headersOne['content-length'] + " vs " + headersTwo['content-length']);
         return false;
     } else if(headersOne['host'] != headersTwo['host']) {
-        console.log("diff in host: " + headersOne['host'] + " vs " + headersTwo['host']);
+        //console.log("diff in host: " + headersOne['host'] + " vs " + headersTwo['host']);
         return false;
     } else if (headersOne['etag'] != headersTwo['etag']) {
-        console.log("diff in etag: " + headersOne['etag'] + " vs " + headersTwo['etag']);
+        //console.log("diff in etag: " + headersOne['etag'] + " vs " + headersTwo['etag']);
         return false;
     } else {
         return true;
