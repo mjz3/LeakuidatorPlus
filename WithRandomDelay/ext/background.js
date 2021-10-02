@@ -355,6 +355,16 @@ function onBeforeSendHeaders(details) {
         }
     }
 
+    let excludeFlag;
+    if(modeConditions) {
+        // condition 7: check if request was excluded from protection, by a past user decision
+        excludeFlag  = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+        (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+        if(excludeFlag) {
+            modeConditions = false;
+        }
+    }
+
     if(!modeConditions && tabrelations[details.tabId]) {
         
         for(let i = 0; i < tabrelations[details.tabId].length && !modeConditions; i++) 
@@ -370,6 +380,15 @@ function onBeforeSendHeaders(details) {
             //console.log(details.requestId + " " + details.url + " related tabid:" + tabrelations[details.tabId][i] + " url: " + src);
             sourceSite = getSiteFromUrl(src);
             sourceOrigin = combineOrigin(getOriginFromUrl(src));
+
+
+            excludeFlag  = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+            (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+
+            if(excludeFlag) {
+                continue;
+            }
+
             if(extensionMode == "lax") {
                 // check lax conditions on the request
                 if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
@@ -389,15 +408,6 @@ function onBeforeSendHeaders(details) {
 
     if(!modeConditions) {
         //console.log(details.requestId + " " + details.url + " mode conditions false! src: " + src + " and the relations: " + tabrelations[details.tabId]);
-        //delete requestBody[details.requestId];
-        return { requestHeaders: details.requestHeaders };
-    }
-
-    // condition 7: check if request was excluded from protection, by a past user decision
-    let excludeFlag = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
-        (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
-    if(excludeFlag) {
-        //console.log(details.requestId + " " + details.url + " excluded!");
         //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
