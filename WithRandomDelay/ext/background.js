@@ -162,6 +162,7 @@ function weNavigationonCreatedNavigationTarget(details) {
     
     tabrelations[details.tabId].push(details.sourceTabId);
     tabrelations[details.sourceTabId].push(details.tabId);
+    //console.log(details.processId + " weNavigationonCreatedNavigationTarget " + details.url);
 
     //console.log("weNavigationonCreatedNavigationTarget event: tab id: " + details.tabId + " the array: " + tabrelations[details.tabId] + " taburl: " + tabUrl[details.tabId]);
     //console.log("weNavigationonCreatedNavigationTarget event: tab oppener id: " + details.sourceTabId + " the array: " + tabrelations[details.sourceTabId] + " taburl: " + tabUrl[details.sourceTabId]);
@@ -176,6 +177,7 @@ function webNavigationonBeforeNavigate(details){
         navigation[details.tabId] = true;
         tabUrl[details.tabId] = details.url;
     }
+    //console.log(details.processId + "webNavigationonBeforeNavigate " + details.url);
 };
 
 /**
@@ -186,7 +188,26 @@ function webNavigationonCommitted(details){
     if(details.frameId == 0) {
         delete navigation[details.tabId];
         tabUrl[details.tabId] = details.url;
+
+        // if transision type is not link, remove this tab from relations
+        let tqf = ["forward_back", "from_address_bar"];
+        if(tabrelations[details.tabId] &&
+            !(details.transitionType == "link" && !details.transitionQualifiers.some(r => tqf.indexOf(r) >= 0))) {
+
+            for (let i = 0; i < tabrelations[details.tabId].length; ++i) {
+                const relatedTab = tabrelations[details.tabId][i];
+                if(tabrelations[relatedTab]) {
+                    tabrelations[relatedTab] = tabrelations[relatedTab].filter(function(x) {
+                        return x !== details.tabId;
+                    });
+                }
+            }
+
+            tabrelations[details.tabId] = [];
+        }
+
     }
+    //console.log(details.processId + "webNavigationonCommitted; " + " frameid: " + details.frameId + " url: " + details.url + " transitionQualifiers: " + details.transitionQualifiers + ", TransitionType: " + details.transitionType);
 };
 
 /**
@@ -211,6 +232,7 @@ function webNavigationonCompleted(details) {
         var number  = isEmpty(dangerousMapPerTab[details.tabId]) ? 0 : dangerousMapPerTab[details.tabId].length;
         chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
     }
+    //console.log(details.processId + " webNavigationonCompleted " + details.url);
 };
 
 /**
@@ -235,6 +257,8 @@ function onBeforeRequest(details) {
  * @param {details of request} details 
  */
 function onBeforeSendHeaders(details) {
+
+    //console.log(details.requestId + " onBeforeSendHeaders " + " request url " + details.url + " webnavigation url: " + tabUrl[details.tabId] + " related tabs: " + tabrelations[details.tabId]);
 
     if(details.tabId == -1) {
         //delete requestBody[details.requestId];
@@ -406,6 +430,7 @@ function onBeforeSendHeaders(details) {
     ////console.log(details.requestId + " origin: " + originDomain + " target: " + targetDomain + " onBeforeSendHeaders: modified first request!");
 
     // let the first request go through, with cookies removed
+    //console.log(details.requestId + " cookie removed! " + " source: " + src + " target: " + trgt);
     return { requestHeaders: removeRequestHeaders(details, 'Cookie') };
 };
 
@@ -417,6 +442,7 @@ function onBeforeSendHeaders(details) {
  * @param {details of the request} details 
  */
 function onHeadersReceived(details) {
+    //console.log(details.requestId + " onHeadersReceived " + " request url " + details.url + " webnavigation url: " + tabUrl[details.tabId]);
     // check if it was marked as suspicious
     if(corwc[details.requestId]) {
         // if there are multiple events fired for one requestId,
