@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Leakuidator",
   "description": "Protect your identity on the web",
-  "version": "0.1", 
+  "version": "0.0.0.2",
   "permissions": ["webNavigation", "webRequest", "background", "webRequestBlocking","tabs","cookies","storage","https://*/*"],
   "icons": {
 		"16": "./icons/icon.png",
