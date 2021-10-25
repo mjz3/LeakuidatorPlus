@@ -3,7 +3,7 @@
   "name": "Leakuidator",
   "description": "Protect your identity on the web",
   "version": "0.1", 
-  "permissions": ["webNavigation", "webRequest", "background", "webRequestBlocking","tabs","cookies","storage","https://*/*"],
+  "permissions": ["webNavigation", "webRequest", "background", "webRequestBlocking","tabs","storage","https://*/*"],
   "icons": {
 		"16": "./icons/icon.png",
 		"48": "./icons/icon.png",
