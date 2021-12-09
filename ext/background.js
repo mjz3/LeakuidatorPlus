@@ -780,7 +780,7 @@ function xhRequest(rId) {
 
         // trigger when second response headers received
         if(this.readyState == this.HEADERS_RECEIVED) {
-
+            performance.clearResourceTimings();
             // check for observable differences between two responses
             if(!headersEqual(responseOneData, getHeaderMap(request.getAllResponseHeaders()))) {
 
