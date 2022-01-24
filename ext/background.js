@@ -746,7 +746,7 @@ function xhRequest(rId) {
 
     // prepare an instance of XMLHttpRequest, for a second request with cookies
     let request = new XMLHttpRequest();
-    if(requestOnedata.target) {
+    if(requestOnedata) {
         request.open('HEAD'/*requestOnedata.method*/, requestOnedata.target, true);
     } else {
         return;
