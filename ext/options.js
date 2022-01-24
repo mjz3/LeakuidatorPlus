@@ -1,6 +1,6 @@
 "use strict";
 
-var extMode = "lax";
+var extMode = "Relaxed";
 
 init();
 
@@ -22,14 +22,14 @@ function populateMode(data) {
     } else {
         let e = document.getElementById('modeOption');
         extMode = data;
-        if(data == 'lax') {
+        if(data == 'Relaxed') {
             e.selectedIndex = 0;
         } else {
             e.selectedIndex = 1;
         }
     }
     
-    if(extMode == "lax") {
+    if(extMode == "Relaxed") {
         chrome.runtime.sendMessage({type: "getExcludeSiteList"}, function(response) {
             populateExcludeList(response.val);
         });
@@ -103,7 +103,7 @@ function excludeAddListener() {
         let originVal = originElement.value;
         let targetVal = targetElement.value;
 
-        if(extMode == "lax") {
+        if(extMode == "Relaxed") {
             chrome.runtime.sendMessage({type: 'excludeSite', source: originVal, target: targetVal}, null);
         } else {
             chrome.runtime.sendMessage({type: 'excludeOrigin', source: originVal, target: targetVal}, null);
@@ -141,7 +141,7 @@ function excludeRemoveListener() {
         
         for(let i = 0; i < remove.length; i++) {
             //console.log("request to remove: " + remove[i][0] + " to " + remove[i][1]);
-            if(extMode == "lax") {
+            if(extMode == "Relaxed") {
                 chrome.runtime.sendMessage({type: 'removeExcludeSite', source: remove[i][0], target: remove[i][1]}, null);
             } else {
                 chrome.runtime.sendMessage({type: 'removeExcludeOrigin', source: remove[i][0], target: remove[i][1]}, null);
@@ -159,7 +159,7 @@ function ignoreAddListener() {
         let originVal = originElement.value;
         let targetVal = targetElement.value;
 
-        if(extMode == "lax") {
+        if(extMode == "Relaxed") {
             chrome.runtime.sendMessage({type: 'ignoreSite', source: originVal, target: targetVal}, null);
         } else {
             chrome.runtime.sendMessage({type: 'ignoreOrigin', source: originVal, target: targetVal}, null);
@@ -197,7 +197,7 @@ function ignoreRemoveListener() {
         
         for(let i = 0; i < remove.length; i++) {
             //console.log("request to remove: " + remove[i][0] + " to " + remove[i][1]);
-            if(extMode == "lax") {
+            if(extMode == "Relaxed") {
                 chrome.runtime.sendMessage({type: 'removeIgnoreSite', source: remove[i][0], target: remove[i][1]}, null);
             } else {
                 chrome.runtime.sendMessage({type: 'removeIgnoreOrigin', source: remove[i][0], target: remove[i][1]}, null);

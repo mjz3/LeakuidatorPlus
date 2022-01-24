@@ -1,6 +1,6 @@
 
 "use strict";
-var extMode = "lax";
+var extMode = "Relaxed";
 
 // Get the list on current tab as soon as the document's DOM is ready.
 document.addEventListener('DOMContentLoaded', function () {
@@ -108,7 +108,7 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         
             link.addEventListener('click', function() {
                 //console.log("exclude clicked!");
-                if(extMode == "lax") {
+                if(extMode == "Relaxed") {
                     chrome.runtime.sendMessage({type: 'excludeSite', source: src, target: trgt}, null);
                 } else {
                     chrome.runtime.sendMessage({type: 'excludeOrigin', source: src, target: trgt}, null);
@@ -121,7 +121,7 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
 
             link.addEventListener('click', function() {
                 //console.log("excludeAll clicked!");
-                if(extMode == "lax") {
+                if(extMode == "Relaxed") {
                     chrome.runtime.sendMessage({type: 'excludeSiteAll', target: trgt}, null);
                 } else {
                     chrome.runtime.sendMessage({type: 'excludeOriginAll', target: trgt}, null);
@@ -133,7 +133,7 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         link = document.getElementById(idx+"_ignore");
             link.addEventListener('click', function() {
                 //console.log("ignore clicked!");
-                if(extMode == "lax") {
+                if(extMode == "Relaxed") {
                     chrome.runtime.sendMessage({type: 'ignoreSite', source: src, target: trgt}, null);
                 } else {
                     chrome.runtime.sendMessage({type: 'ignoreOrigin', source: src, target: trgt}, null);
@@ -146,7 +146,7 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         
             link.addEventListener('click', function() {
                 //console.log("ignoreAll clicked!");
-                if(extMode == "lax") {
+                if(extMode == "Relaxed") {
                     chrome.runtime.sendMessage({type: 'ignoreSiteAll', target: trgt}, null);
                 } else {
                     chrome.runtime.sendMessage({type: 'ignoreOriginAll', target: trgt}, null);

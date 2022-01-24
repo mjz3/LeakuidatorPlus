@@ -1,4 +1,4 @@
-"use strict";
+"use Exact";
 // var to count number of suspicious requests
 var susCount = 0;
 // var to count number of dangerous requests
@@ -16,7 +16,7 @@ var xhrData = []; // data related to second request with cookies included
 var tabrelations = [];
 var occured = [];
 // default extension mode
-var extensionMode = "lax"; // lax or strict
+var extensionMode = "Relaxed"; // Relaxed or Exact
 
 // name of storage vars
 var keys = ["excludeSite", "excludeOrigin", "ignoreSite", "ignoreOrigin", "mode"];
@@ -226,9 +226,9 @@ function webNavigationonCompleted(details) {
         tabUrl[details.tabId] = details.url;
 
         // remove user's decided mappings from the list
-        if(extensionMode == "lax") {
+        if(extensionMode == "Relaxed") {
             dangerousMapPerTab[details.tabId] = purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeSiteMap, ignoreSiteMap);
-        } else if(extensionMode == "strict"){
+        } else if(extensionMode == "Exact"){
             dangerousMapPerTab[details.tabId] = purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeOriginMap, ignoreOriginMap);
         }
 
@@ -309,7 +309,7 @@ function onBeforeSendHeaders(details) {
     if(fetchMode == "navigate" && fetchDest == "document") {
         //console.log(details.requestId + " " + details.url + "navigate and document! navigating to " + tabUrl[details.tabId] +
         //" and relations are " + tabrelations[details.tabId]);
-        // corresponds to allowed SameSite=Lax conditions, and are excempted from protection
+        // corresponds to allowed SameSite=lax conditions, and are excempted from protection
         //delete requestBody[details.requestId];
         if(tabrelations[details.tabId]) {
             navigationFlag = true;
@@ -347,13 +347,13 @@ function onBeforeSendHeaders(details) {
             return { requestHeaders: details.requestHeaders };
         }
 
-        if(extensionMode == "lax") {
-            // check lax conditions on the request
+        if(extensionMode == "Relaxed") {
+            // check Relaxed conditions on the request
             if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
                 modeConditions = ((!isEmpty(fetchSite) && fetchSite == "cross-site") || crossSite(sourceSite, targetSite) ? true : false);
             }
-        } else if(extensionMode == "strict") {
-            // check strict conditions on the request
+        } else if(extensionMode == "Exact") {
+            // check Exact conditions on the request
             if (!isEmpty(sourceOrigin) && !isEmpty(targetOrigin)) {
                 modeConditions = ((!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") || crossOrigin(sourceOrigin, targetOrigin)? true : false);
             }
@@ -363,8 +363,8 @@ function onBeforeSendHeaders(details) {
     let excludeFlag;
     if(modeConditions) {
         // condition 7: check if request was excluded from protection, by a past user decision
-        excludeFlag  = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
-        (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+        excludeFlag  = (((extensionMode == "Relaxed" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+        (extensionMode == "Exact" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
         if(excludeFlag) {
             modeConditions = false;
         }
@@ -386,20 +386,20 @@ function onBeforeSendHeaders(details) {
             sourceSite = getSiteFromUrl(src);
             sourceOrigin = combineOrigin(getOriginFromUrl(src));
 
-            if(extensionMode == "lax") {
-                // check lax conditions on the request
+            if(extensionMode == "Relaxed") {
+                // check Relaxed conditions on the request
                 if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
                     modeConditions = ((!isEmpty(fetchSite) && fetchSite == "cross-site") || crossSite(sourceSite, targetSite) ? true : false);
                 }
-            } else if(extensionMode == "strict") {
-                // check strict conditions on the request
+            } else if(extensionMode == "Exact") {
+                // check Exact conditions on the request
                 if (!isEmpty(sourceOrigin) && !isEmpty(targetOrigin)) {
                     modeConditions = ((!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") || crossOrigin(sourceOrigin, targetOrigin)? true : false);
                 }
             }
 
-            excludeFlag  = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
-            (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+            excludeFlag  = (((extensionMode == "Relaxed" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+            (extensionMode == "Exact" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
 
             if(excludeFlag) {
                 modeConditions = false;
@@ -421,7 +421,7 @@ function onBeforeSendHeaders(details) {
     if(!corwc[details.requestId]) {
         corwc[details.requestId] = true;
         /*console.log(details.requestId + " corwc set. extMode: " + extensionMode + " excludeFlag: " + excludeFlag +
-            " laxConditions: " + laxConditions + " strictCondtions: " + strictConditions + " fetchMode: " + fetchMode +
+            " RelaxedConditions: " + RelaxedConditions + " ExactCondtions: " + ExactConditions + " fetchMode: " + fetchMode +
             " fetchSite " + fetchSite + " fetchDest: " + fetchDest +  " from " + src + " to " + trgt);*/
         
         // copy headers to a new array, to survive
@@ -527,7 +527,7 @@ function runtimeonMessage(msg, sender, sendResponse) {
                 ////console.log("activetabid: " + activeTabId);
 
                 // remove user decided mappings from the list
-                if(extensionMode == "lax") {
+                if(extensionMode == "Relaxed") {
                     dangerousMapPerTab[activeTabId] = purgesuspiciousMapForTab(dangerousMapPerTab[activeTabId], excludeSiteMap, ignoreSiteMap);
                 } else {
                     dangerousMapPerTab[activeTabId] = purgesuspiciousMapForTab(dangerousMapPerTab[activeTabId], excludeOriginMap, ignoreOriginMap);
@@ -746,7 +746,11 @@ function xhRequest(rId) {
 
     // prepare an instance of XMLHttpRequest, for a second request with cookies
     let request = new XMLHttpRequest();
-    request.open('HEAD'/*requestOnedata.method*/, requestOnedata.target, true);
+    if(requestOnedata.target) {
+        request.open('HEAD'/*requestOnedata.method*/, requestOnedata.target, true);
+    } else {
+        return;
+    }
 
     // set request headers, identical to first request
     /*for (let i = 0; i < requestOnedata.headers.length; ++i) {
@@ -797,21 +801,21 @@ function xhRequest(rId) {
                 
                 // prepare element to compare with past user decisions
                 let element = [];
-                if(extensionMode == "lax") {
+                if(extensionMode == "Relaxed") {
                     element = [sourceSite, targetSite];
-                } else if(extensionMode == "strict") {
+                } else if(extensionMode == "Exact") {
                     element = [sourceOrigin, targetOrigin];
                 }
                 
                 // extract tab Id
                 let tId = requestOnedata.tabId;
 
-                /*var excludeFlag = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite)) ||
-                (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
+                /*var excludeFlag = (((extensionMode == "Relaxed" && isSiteExcluded(sourceSite, targetSite)) ||
+                (extensionMode == "Exact" && isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
 
                 // check if the request is ignored by user in the past decisions
-                let ignoreFlag = (((extensionMode == "lax" && isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
-                (extensionMode == "strict" && isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
+                let ignoreFlag = (((extensionMode == "Relaxed" && isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
+                (extensionMode == "Exact" && isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
 
                 // user needs to know about this dangerous request
                 if(!ignoreFlag) {
@@ -862,21 +866,21 @@ function xhRequest(rId) {
                 
                 // prepare element to compare with past user decisions
                 let element = [];
-                if(extensionMode == "lax") {
+                if(extensionMode == "Relaxed") {
                     element = [sourceSite, targetSite];
-                } else if(extensionMode == "strict") {
+                } else if(extensionMode == "Exact") {
                     element = [sourceOrigin, targetOrigin];
                 }
                 
                 // extract tab Id
                 let tId = requestOnedata.tabId;
 
-                /*var excludeFlag = (((extensionMode == "lax" && isSiteExcluded(sourceSite, targetSite)) ||
-                (extensionMode == "strict" && isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
+                /*var excludeFlag = (((extensionMode == "Relaxed" && isSiteExcluded(sourceSite, targetSite)) ||
+                (extensionMode == "Exact" && isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
 
                 // check if the request is ignored by user in the past decisions
-                let ignoreFlag = (((extensionMode == "lax" && isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
-                (extensionMode == "strict" && isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
+                let ignoreFlag = (((extensionMode == "Relaxed" && isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
+                (extensionMode == "Exact" && isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
                 // user needs to know about this dangerous request
                 if(!ignoreFlag) {
                     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
