@@ -350,12 +350,12 @@ function onBeforeSendHeaders(details) {
         if(extensionMode == "Relaxed") {
             // check Relaxed conditions on the request
             if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
-                modeConditions = ((!isEmpty(fetchSite) && fetchSite == "cross-site") || crossSite(sourceSite, targetSite) ? true : false);
+                modeConditions = (/*(!isEmpty(fetchSite) && fetchSite == "cross-site") ||*/ crossSite(sourceSite, targetSite) ? true : false);
             }
         } else if(extensionMode == "Exact") {
             // check Exact conditions on the request
             if (!isEmpty(sourceOrigin) && !isEmpty(targetOrigin)) {
-                modeConditions = ((!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") || crossOrigin(sourceOrigin, targetOrigin)? true : false);
+                modeConditions = (/*(!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") ||*/ crossOrigin(sourceOrigin, targetOrigin)? true : false);
             }
         }
     }
@@ -389,12 +389,12 @@ function onBeforeSendHeaders(details) {
             if(extensionMode == "Relaxed") {
                 // check Relaxed conditions on the request
                 if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
-                    modeConditions = ((!isEmpty(fetchSite) && fetchSite == "cross-site") || crossSite(sourceSite, targetSite) ? true : false);
+                    modeConditions = (/*(!isEmpty(fetchSite) && fetchSite == "cross-site") ||*/ crossSite(sourceSite, targetSite) ? true : false);
                 }
             } else if(extensionMode == "Exact") {
                 // check Exact conditions on the request
                 if (!isEmpty(sourceOrigin) && !isEmpty(targetOrigin)) {
-                    modeConditions = ((!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") || crossOrigin(sourceOrigin, targetOrigin)? true : false);
+                    modeConditions = (/*(!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") ||*/ crossOrigin(sourceOrigin, targetOrigin)? true : false);
                 }
             }
 
