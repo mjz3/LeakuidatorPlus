@@ -1,4 +1,5 @@
 "use Exact";
+
 // var to count number of suspicious requests
 var susCount = 0;
 // var to count number of dangerous requests
@@ -49,7 +50,6 @@ var pslLib; // public suffix list library
 
 // handle to the list of public suffixes
 var data;
-
 
 init();
 
@@ -346,12 +346,12 @@ function onBeforeSendHeaders(details) {
         if(extensionMode == "Relaxed") {
             // check Relaxed conditions on the request
             if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
-                modeConditions = ((!isEmpty(fetchSite) && fetchSite == "cross-site") || crossSite(sourceSite, targetSite) ? true : false);
+                modeConditions = (/*(!isEmpty(fetchSite) && fetchSite == "cross-site") ||*/ crossSite(sourceSite, targetSite) ? true : false);
             }
         } else if(extensionMode == "Exact") {
             // check Exact conditions on the request
             if (!isEmpty(sourceOrigin) && !isEmpty(targetOrigin)) {
-                modeConditions = ((!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") || crossOrigin(sourceOrigin, targetOrigin)? true : false);
+                modeConditions = (/*(!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") ||*/ crossOrigin(sourceOrigin, targetOrigin)? true : false);
             }
         }
     }
@@ -385,12 +385,12 @@ function onBeforeSendHeaders(details) {
             if(extensionMode == "Relaxed") {
                 // check Relaxed conditions on the request
                 if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
-                    modeConditions = ((!isEmpty(fetchSite) && fetchSite == "cross-site") || crossSite(sourceSite, targetSite) ? true : false);
+                    modeConditions = (/*(!isEmpty(fetchSite) && fetchSite == "cross-site") ||*/ crossSite(sourceSite, targetSite) ? true : false);
                 }
             } else if(extensionMode == "Exact") {
                 // check Exact conditions on the request
                 if (!isEmpty(sourceOrigin) && !isEmpty(targetOrigin)) {
-                    modeConditions = ((!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") || crossOrigin(sourceOrigin, targetOrigin)? true : false);
+                    modeConditions = (/*(!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") ||*/ crossOrigin(sourceOrigin, targetOrigin)? true : false);
                 }
             }
 
@@ -412,6 +412,9 @@ function onBeforeSendHeaders(details) {
         //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
+    
+    // last condition: is it ad or tracking?
+    if(findProxyForURL(getFullDomainFromUrl(details.url))) return { requestHeaders: details.requestHeaders };
     
     // if survived the 7 conditions, mark the request as suspicious
     if(!corwc[details.requestId]) {
@@ -930,4 +933,16 @@ function getSiteFromUrl(fullUrl) {
     let line = pnc.toASCII(fullUrl.toLowerCase());
     let domain = pslLib.getDomain(line);
     return domain;    
+};
+
+function getFullDomainFromUrl(fullUrl) {
+    let currURL;
+    if(isEmpty(fullUrl))
+        return undefined;
+    if (fullUrl.indexOf("//") != -1) {
+        currURL = fullUrl.split('//')[1];
+    }
+    currURL = currURL.split('/')[0];
+    let hname = pnc.toASCII(currURL.toLowerCase());
+    return isEmpty(hname) ? fullUrl.toLowerCase() : hname;
 };
