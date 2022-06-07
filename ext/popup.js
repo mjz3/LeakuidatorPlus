@@ -39,14 +39,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // }
     var optbutton = document.getElementById("options-button");
     optbutton.addEventListener("click", function () {
-        browser.tabs.query({url: browser.runtime.getURL('') + '*'}, tabs => {
+        chrome.tabs.query({url: chrome.runtime.getURL('') + '*'}, tabs => {
             if (!tabs[0]) {
-              browser.runtime.openOptionsPage();
+              chrome.runtime.openOptionsPage();
               window.close();
               return;
             }
             const tab = tabs.find(item => /ext\/options\.html/.test(item.url));  // find an option tab
-            tab ? browser.tabs.update(tab.id, {active: true}) : browser.tabs.update(tabs[0].id, {active: true, url: '/ext/options.html'});
+            tab ? chrome.tabs.update(tab.id, {active: true}) : chrome.tabs.update(tabs[0].id, {active: true, url: '/ext/options.html'});
             window.close();
           });
     });
