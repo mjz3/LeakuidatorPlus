@@ -233,7 +233,7 @@ function webNavigationonCompleted(details) {
         }
 
         // set notification for user
-        chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
+        chrome.browserAction.setBadgeBackgroundColor({ color: [102, 102, 102, 255] });
         var number  = isEmpty(dangerousMapPerTab[details.tabId]) ? 0 : dangerousMapPerTab[details.tabId].length;
         chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
     }
@@ -537,7 +537,7 @@ function runtimeonMessage(msg, sender, sendResponse) {
                 }
 
                 // set notification for user
-                chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
+                chrome.browserAction.setBadgeBackgroundColor({ color: [102, 102, 102, 255] });
                 let number  = isEmpty(dangerousMapPerTab[activeTabId]) ? 0 : dangerousMapPerTab[activeTabId].length;
                 chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
 
@@ -836,7 +836,7 @@ function xhRequest(rId) {
                             });
 
                             // set notification for user
-                            chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
+                            chrome.browserAction.setBadgeBackgroundColor({ color: [102, 102, 102, 255] });
                             var number  = isEmpty(dangerousMapPerTab[currTab.id]) ? 0 : dangerousMapPerTab[currTab.id].length;
                             chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
                         }
@@ -900,7 +900,7 @@ function xhRequest(rId) {
                             });
 
                             // set notification for user
-                            chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
+                            chrome.browserAction.setBadgeBackgroundColor({ color: [102, 102, 102, 255] });
                             var number  = isEmpty(dangerousMapPerTab[currTab.id]) ? 0 : dangerousMapPerTab[currTab.id].length;
                             chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
                         }

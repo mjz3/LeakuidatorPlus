@@ -37,6 +37,19 @@ document.addEventListener('DOMContentLoaded', function () {
     //     }
     // });
     // }
+    var optbutton = document.getElementById("options-button");
+    optbutton.addEventListener("click", function () {
+        chrome.tabs.query({url: chrome.runtime.getURL('') + '*'}, tabs => {
+            if (!tabs[0]) {
+              chrome.runtime.openOptionsPage();
+              window.close();
+              return;
+            }
+            const tab = tabs.find(item => /ext\/options\.html/.test(item.url));  // find an option tab
+            tab ? chrome.tabs.update(tab.id, {active: true}) : chrome.tabs.update(tabs[0].id, {active: true, url: '/ext/options.html'});
+            window.close();
+          });
+    });
 });
 
 function createHtmlForSuspiciousList(suspiciousMap) {
