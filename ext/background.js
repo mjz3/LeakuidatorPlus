@@ -49,20 +49,30 @@ var pnc; // punnycode
 var pslLib; // public suffix list library
 
 // handle to the list of public suffixes
-var data;
+var psl;
+
+// handle to Peter Lowe's list
+var pll;
+
+// handle to MVPS list
+var mvps;
+
 
 init();
 
 // initialize the extension
 function init() {
-
     // init the handle to libraries
     pslLib = getSuffixList();
     pnc = getPunycode();
-    let psl = getData();
+    psl = getPSL();
     
     // load public suffix list
     pslLib.parse(psl, pnc.toASCII);
+
+    // load filter lists
+    pll = getPLL();
+    mvps = getMVPS();
 
     // get prior user decisions/configurations from storage
 	config();
@@ -418,7 +428,9 @@ function onBeforeSendHeaders(details) {
     }
     
     // last condition: is it ad or tracking?
-    if(findProxyForURL(getFullDomainFromUrl(details.url))) return { requestHeaders: details.requestHeaders };
+    if(findProxyForURL(mvps, details.url) || findProxyForURL(pll, details.url)) {
+        return { requestHeaders: details.requestHeaders };
+    }
     
     // if survived the 7 conditions, mark the request as suspicious
     if(!corwc[details.requestId]) {
@@ -920,33 +932,4 @@ function xhRequest(rId) {
 
     // send the second request with cookies
     request.send(/*params*/);
-};
-
-/**
- * extract Site of a URL using
- * public suffix list library
- * @param {full URL} fullUrl 
- */
-function getSiteFromUrl(fullUrl) {
-    if(isEmpty(fullUrl))
-        return undefined;
-    if (fullUrl.indexOf("//") != -1) {
-        fullUrl = fullUrl.split('//')[1];
-    }
-    fullUrl = fullUrl.split('/')[0];
-    let line = pnc.toASCII(fullUrl.toLowerCase());
-    let domain = pslLib.getDomain(line);
-    return domain;    
-};
-
-function getFullDomainFromUrl(fullUrl) {
-    let currURL;
-    if(isEmpty(fullUrl))
-        return undefined;
-    if (fullUrl.indexOf("//") != -1) {
-        currURL = fullUrl.split('//')[1];
-    }
-    currURL = currURL.split('/')[0];
-    let hname = pnc.toASCII(currURL.toLowerCase());
-    return isEmpty(hname) ? fullUrl.toLowerCase() : hname;
 };
