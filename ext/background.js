@@ -1,5 +1,31 @@
 "use Exact";
 
+import publicSuffixList from '../lib/publicsuffixlist.js';
+import utils from '../lib/utils.js';
+
+// check if an element exists in array using a comparer function
+// comparer : function(currentElement)
+Array.prototype.inArray = function(comparer) { 
+    for(let i=0; i < this.length; i++) { 
+        if(comparer(this[i])) return true; 
+    }
+    return false;
+}; 
+
+// adds an element to the array if it does not already exist using a comparer 
+// function
+Array.prototype.pushIfNotExist = function(element, comparer) { 
+    if (!this.inArray(comparer)) {
+        this.push(element);
+    }
+};
+
+Array.prototype.remove = function(element, comparer) {
+    if(this.inArray(comparer)) {
+        this.splice(element, 1);
+    }
+}
+
 // var to count number of suspicious requests
 var susCount = 0;
 // var to count number of dangerous requests
@@ -46,7 +72,7 @@ var dangerousMapPerTab = [];
 // handle to other libraries
 //var fs; // file system
 var pnc; // punnycode
-var pslLib; // public suffix list library
+//var pslLib; // public suffix list library
 
 // handle to the list of public suffixes
 var psl;
@@ -62,12 +88,12 @@ init();
 // initialize the extension
 function init() {
     // init the handle to libraries
-    pslLib = getSuffixList();
-    pnc = getPunycode();
+    //pslLib = pslLibConstructor();
+    //pnc = punycode;
     psl = getPSL();
     
     // load public suffix list
-    pslLib.parse(psl, pnc.toASCII);
+    publicSuffixList.parse(psl, punycode.toASCII);
 
     // load filter lists
     pll = getPLL();
@@ -110,10 +136,10 @@ function init() {
  * @param {tab info} tab 
  */
  function onTabCreatedListener(tab) {
-     if(isEmpty(tabrelations[tab.id])) {
+     if(utils.isEmpty(tabrelations[tab.id])) {
         tabrelations[tab.id] = [];
      }
-     if(isEmpty(tabrelations[tab.openerTabId])) {
+     if(utils.isEmpty(tabrelations[tab.openerTabId])) {
         tabrelations[tab.openerTabId] = [];
      }
     
@@ -137,7 +163,7 @@ function init() {
  * @param {tab info} tab 
  */
 function onTabUpdatedListener(tabId, changeInfo, tab) {
-    if(!isEmpty(changeInfo.url)) {dangerousMapPerTab[tabId] = [];}
+    if(!utils.isEmpty(changeInfo.url)) {dangerousMapPerTab[tabId] = [];}
     tabUrl[tabId] = tab.url;
     tabPendingUrl[tabId] = tab.pendingUrl;
     //console.log("onTabUpdatedListener event: tab id: " + tabId + " the array: " + tabrelations[tabId] + " taburl: " + tabUrl[tabId]);
@@ -163,10 +189,10 @@ function weNavigationonCreatedNavigationTarget(details) {
     }
 
     if(details.tabId != details.sourceTabId) {
-        if(isEmpty(tabrelations[details.tabId])) {
+        if(utils.isEmpty(tabrelations[details.tabId])) {
             tabrelations[details.tabId] = [];
          }
-         if(isEmpty(tabrelations[details.sourceTabId])) {
+         if(utils.isEmpty(tabrelations[details.sourceTabId])) {
             tabrelations[details.sourceTabId] = [];
          }
 
@@ -232,14 +258,14 @@ function webNavigationonCompleted(details) {
 
         // remove user's decided mappings from the list
         if(extensionMode == "Relaxed") {
-            dangerousMapPerTab[details.tabId] = purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeSiteMap, ignoreSiteMap);
+            dangerousMapPerTab[details.tabId] = utils.purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeSiteMap, ignoreSiteMap);
         } else if(extensionMode == "Exact"){
-            dangerousMapPerTab[details.tabId] = purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeOriginMap, ignoreOriginMap);
+            dangerousMapPerTab[details.tabId] = utils.purgesuspiciousMapForTab(dangerousMapPerTab[details.tabId], excludeOriginMap, ignoreOriginMap);
         }
 
         // set notification for user
         chrome.browserAction.setBadgeBackgroundColor({ color: [102, 102, 102, 255] });
-        var number  = isEmpty(dangerousMapPerTab[details.tabId]) ? 0 : dangerousMapPerTab[details.tabId].length;
+        var number  = utils.isEmpty(dangerousMapPerTab[details.tabId]) ? 0 : dangerousMapPerTab[details.tabId].length;
         chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
     }
     //console.log(details.processId + " webNavigationonCompleted " + details.url);
@@ -253,7 +279,7 @@ function webNavigationonCompleted(details) {
 /*
 function onBeforeRequest(details) {
     try {
-        requestBody[details.requestId] = ( isEmpty(details.requestBody) || isEmpty(details.requestBody.raw || isEmpty(isEmpty(details.requestBody.raw[0]))) ? undefined : decodeURIComponent(String.fromCharCode.apply(null,
+        requestBody[details.requestId] = ( utils.isEmpty(details.requestBody) || utils.isEmpty(details.requestBody.raw || utils.isEmpty(utils.isEmpty(details.requestBody.raw[0]))) ? undefined : decodeURIComponent(String.fromCharCode.apply(null,
             new Uint8Array(details.requestBody.raw[0].bytes))));
     } catch(err) {
         requestBody[details.requestId] = undefined;
@@ -287,7 +313,7 @@ function onBeforeSendHeaders(details) {
     }
 
     // condition 4: check if request contains cookies
-    if(!headerExists(details, "Cookie")) {
+    if(!utils.headerExists(details, "Cookie")) {
         //console.log(details.requestId + " " + details.url + " no cookies!");
         // lacks root cause of leaky resource attacks
         //delete requestBody[details.requestId];
@@ -295,9 +321,9 @@ function onBeforeSendHeaders(details) {
     }
 
     // extract Sec-Fetch header values
-    let fetchSite = headerValue(details.requestHeaders, "Sec-Fetch-Site");
-    let fetchDest = headerValue(details.requestHeaders, "Sec-Fetch-Dest");
-    let fetchMode = headerValue(details.requestHeaders, "Sec-Fetch-Mode");
+    let fetchSite = utils.headerValue(details.requestHeaders, "Sec-Fetch-Site");
+    let fetchDest = utils.headerValue(details.requestHeaders, "Sec-Fetch-Dest");
+    let fetchMode = utils.headerValue(details.requestHeaders, "Sec-Fetch-Mode");
 
     // condition 5: chech if the request is navigation to a document
 
@@ -325,14 +351,14 @@ function onBeforeSendHeaders(details) {
 
     // extract information about target of request
     let trgt = details.url;
-    let targetSite = getSiteFromUrl(trgt);
-    let targetOrigin = combineOrigin(getOriginFromUrl(trgt));
+    let targetSite = utils.getSiteFromUrl(trgt);
+    let targetOrigin = utils.combineOrigin(utils.getOriginFromUrl(trgt));
 
     
     // extract information about source of request
     let src = tabUrl[details.tabId];
-    let sourceSite = getSiteFromUrl(src);
-    let sourceOrigin = combineOrigin(getOriginFromUrl(src));
+    let sourceSite = utils.getSiteFromUrl(src);
+    let sourceOrigin = utils.combineOrigin(utils.getOriginFromUrl(src));
 
     // condition 6: check if it is a cross-site/cross-origin request
     let modeConditions = false;
@@ -342,11 +368,11 @@ function onBeforeSendHeaders(details) {
         // condition 2: check if the tab is in navigation state, and
         // condition 3: whether the tab URL is valid
         if((navigation[details.tabId] == true && !tabrelations[details.tabId]) ||
-            (!isEmpty(tabPendingUrl[details.tabId]) && tabUrl[details.tabId].toLowerCase() !== tabPendingUrl[details.tabId].toLowerCase()) ||
+            (!utils.isEmpty(tabPendingUrl[details.tabId]) && tabUrl[details.tabId].toLowerCase() !== tabPendingUrl[details.tabId].toLowerCase()) ||
             details.tabId == -1 ||
-            startsWith(tabUrl[details.tabId].toLowerCase(), "chrome://newtab/") == true ||
-            startsWith(tabUrl[details.tabId].toLowerCase(), "chrome-extension://") == true ||
-            startsWith(tabUrl[details.tabId].toLowerCase(), "edge://newtab/") == true) {
+            tabUrl[details.tabId].toLowerCase().startsWith("chrome://newtab/") ||
+            tabUrl[details.tabId].toLowerCase().startsWith("chrome-extension://") ||
+            tabUrl[details.tabId].toLowerCase().startsWith("edge://newtab/")) {
                 //console.log(details.requestId + " " + details.url + " new tab!");
             //delete requestBody[details.requestId];
             return { requestHeaders: details.requestHeaders };
@@ -354,13 +380,13 @@ function onBeforeSendHeaders(details) {
 
         if(extensionMode == "Relaxed") {
             // check Relaxed conditions on the request
-            if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
-                modeConditions = (/*(!isEmpty(fetchSite) && fetchSite == "cross-site") ||*/ crossSite(sourceSite, targetSite) ? true : false);
+            if(!utils.isEmpty(sourceSite) && !utils.isEmpty(targetSite)) {
+                modeConditions = (/*(!utils.isEmpty(fetchSite) && fetchSite == "cross-site") ||*/ utils.crossSite(sourceSite, targetSite) ? true : false);
             }
         } else if(extensionMode == "Exact") {
             // check Exact conditions on the request
-            if (!isEmpty(sourceOrigin) && !isEmpty(targetOrigin)) {
-                modeConditions = (/*(!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") ||*/ crossOrigin(sourceOrigin, targetOrigin)? true : false);
+            if (!utils.isEmpty(sourceOrigin) && !utils.isEmpty(targetOrigin)) {
+                modeConditions = (/*(!utils.isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") ||*/ utils.crossOrigin(sourceOrigin, targetOrigin)? true : false);
             }
         }
     }
@@ -368,8 +394,8 @@ function onBeforeSendHeaders(details) {
     let excludeFlag;
     if(modeConditions) {
         // condition 7: check if request was excluded from protection, by a past user decision
-        excludeFlag  = (((extensionMode == "Relaxed" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
-        (extensionMode == "Exact" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+        excludeFlag  = (((extensionMode == "Relaxed" && utils.isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+        (extensionMode == "Exact" && utils.isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
         if(excludeFlag) {
             modeConditions = false;
         }
@@ -388,23 +414,23 @@ function onBeforeSendHeaders(details) {
                 src = srctmp;
             }
             //console.log(details.requestId + " " + details.url + " related tabid:" + tabrelations[details.tabId][i] + " url: " + src);
-            sourceSite = getSiteFromUrl(src);
-            sourceOrigin = combineOrigin(getOriginFromUrl(src));
+            sourceSite = utils.getSiteFromUrl(src);
+            sourceOrigin = utils.combineOrigin(utils.getOriginFromUrl(src));
 
             if(extensionMode == "Relaxed") {
                 // check Relaxed conditions on the request
-                if(!isEmpty(sourceSite) && !isEmpty(targetSite)) {
-                    modeConditions = (/*(!isEmpty(fetchSite) && fetchSite == "cross-site") ||*/ crossSite(sourceSite, targetSite) ? true : false);
+                if(!utils.isEmpty(sourceSite) && !utils.isEmpty(targetSite)) {
+                    modeConditions = (/*(!utils.isEmpty(fetchSite) && fetchSite == "cross-site") ||*/ utils.crossSite(sourceSite, targetSite) ? true : false);
                 }
             } else if(extensionMode == "Exact") {
                 // check Exact conditions on the request
-                if (!isEmpty(sourceOrigin) && !isEmpty(targetOrigin)) {
-                    modeConditions = (/*(!isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") ||*/ crossOrigin(sourceOrigin, targetOrigin)? true : false);
+                if (!utils.isEmpty(sourceOrigin) && !utils.isEmpty(targetOrigin)) {
+                    modeConditions = (/*(!utils.isEmpty(fetchSite) && fetchSite != "same-origin" && fetchSite != "none") ||*/ utils.crossOrigin(sourceOrigin, targetOrigin)? true : false);
                 }
             }
 
-            excludeFlag  = (((extensionMode == "Relaxed" && isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
-            (extensionMode == "Exact" && isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
+            excludeFlag  = (((extensionMode == "Relaxed" && utils.isSiteExcluded(sourceSite, targetSite, excludeSiteMap)) ||
+            (extensionMode == "Exact" && utils.isOriginExcluded(sourceOrigin, targetOrigin, excludeOriginMap))) ? true : false);
 
             if(excludeFlag) {
                 modeConditions = false;
@@ -421,9 +447,8 @@ function onBeforeSendHeaders(details) {
         //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
-    
     // last condition: is it ad or tracking?
-    if(findProxyForURL(mvps, details.url) || findProxyForURL(pll, details.url)) {
+    if(utils.findProxyForURL(mvps, details.url) || utils.findProxyForURL(pll, details.url)) {
         return { requestHeaders: details.requestHeaders };
     }
     
@@ -435,7 +460,7 @@ function onBeforeSendHeaders(details) {
             " fetchSite " + fetchSite + " fetchDest: " + fetchDest +  " from " + src + " to " + trgt);*/
         
         // copy headers to a new array, to survive
-        //let copiedHeaders = returnHeaders(details);
+        //let copiedHeaders = utils.returnHeaders(details);
         
 
         // store first request data, to be used by @xhRequest
@@ -456,7 +481,7 @@ function onBeforeSendHeaders(details) {
 
     // let the first request go through, with cookies removed
     //console.log(details.requestId + " cookie removed! " + " source: " + src + " target: " + trgt);
-    return { requestHeaders: removeRequestHeaders(details, 'Cookie') };
+    return { requestHeaders: utils.removeRequestHeaders(details, 'Cookie') };
 };
 
 /**
@@ -497,7 +522,7 @@ function onHeadersReceived(details) {
             //delete corwc[details.requestId];
         }
         // return response to first request, with Set-Cookie header removed
-        return { responseHeaders: removeResponseHeaders(details, 'Set-Cookie') };
+        return { responseHeaders: utils.removeResponseHeaders(details, 'Set-Cookie') };
     }
 };
 /*
@@ -538,14 +563,14 @@ function runtimeonMessage(msg, sender, sendResponse) {
 
                 // remove user decided mappings from the list
                 if(extensionMode == "Relaxed") {
-                    dangerousMapPerTab[activeTabId] = purgesuspiciousMapForTab(dangerousMapPerTab[activeTabId], excludeSiteMap, ignoreSiteMap);
+                    dangerousMapPerTab[activeTabId] = utils.purgesuspiciousMapForTab(dangerousMapPerTab[activeTabId], excludeSiteMap, ignoreSiteMap);
                 } else {
-                    dangerousMapPerTab[activeTabId] = purgesuspiciousMapForTab(dangerousMapPerTab[activeTabId], excludeOriginMap, ignoreOriginMap);
+                    dangerousMapPerTab[activeTabId] = utils.purgesuspiciousMapForTab(dangerousMapPerTab[activeTabId], excludeOriginMap, ignoreOriginMap);
                 }
 
                 // set notification for user
                 chrome.browserAction.setBadgeBackgroundColor({ color: [102, 102, 102, 255] });
-                let number  = isEmpty(dangerousMapPerTab[activeTabId]) ? 0 : dangerousMapPerTab[activeTabId].length;
+                let number  = utils.isEmpty(dangerousMapPerTab[activeTabId]) ? 0 : dangerousMapPerTab[activeTabId].length;
                 chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
 
                 sendResponse({val: dangerousMapPerTab[activeTabId]});
@@ -752,7 +777,7 @@ function xhRequest(rId) {
     let responseOneData = firstResponseHeaders[rId];
     let requestOnedata = xhrData[rId];
     // extract the request headers that are not unsafe
-    //requestOnedata.headers = trimUnsafeHeaders(requestOnedata.headers);
+    //requestOnedata.headers = utils.trimUnsafeHeaders(requestOnedata.headers);
 
     // prepare an instance of XMLHttpRequest, for a second request with cookies
     let request = new XMLHttpRequest();
@@ -786,7 +811,7 @@ function xhRequest(rId) {
     //console.log("parse: " + requestOnedata.body);
     //console.log("stringify: " + JSON.stringify(requestOnedata.body));
     // add request body
-    //let params = isEmpty(requestOnedata.body) ? null : requestOnedata.body;
+    //let params = utils.isEmpty(requestOnedata.body) ? null : requestOnedata.body;
 
     // add a listener to compare two responses,
     // upon arrival of second response
@@ -796,7 +821,7 @@ function xhRequest(rId) {
         if(this.readyState == this.HEADERS_RECEIVED) {
             performance.clearResourceTimings();
             // check for observable differences between two responses
-            if(!headersEqual(responseOneData, getHeaderMap(request.getAllResponseHeaders()))) {
+            if(!utils.headersEqual(responseOneData, utils.getHeaderMap(request.getAllResponseHeaders()))) {
 
                 // it is a dangerous request
 
@@ -804,10 +829,10 @@ function xhRequest(rId) {
                 //console.log('dangerous # ' + danCount + ' from ' + requestOnedata.source);
 
                 // extract Site/Origin data from source and target of a request
-                let targetSite = getSiteFromUrl(requestOnedata.target);
-                let targetOrigin = combineOrigin(getOriginFromUrl(requestOnedata.target));
-                let sourceSite = getSiteFromUrl(requestOnedata.source);
-                let sourceOrigin = combineOrigin(getOriginFromUrl(requestOnedata.source));
+                let targetSite = utils.getSiteFromUrl(requestOnedata.target);
+                let targetOrigin = utils.combineOrigin(utils.getOriginFromUrl(requestOnedata.target));
+                let sourceSite = utils.getSiteFromUrl(requestOnedata.source);
+                let sourceOrigin = utils.combineOrigin(utils.getOriginFromUrl(requestOnedata.source));
                 
                 // prepare element to compare with past user decisions
                 let element = [];
@@ -820,12 +845,12 @@ function xhRequest(rId) {
                 // extract tab Id
                 let tId = requestOnedata.tabId;
 
-                /*var excludeFlag = (((extensionMode == "Relaxed" && isSiteExcluded(sourceSite, targetSite)) ||
-                (extensionMode == "Exact" && isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
+                /*var excludeFlag = (((extensionMode == "Relaxed" && utils.isSiteExcluded(sourceSite, targetSite)) ||
+                (extensionMode == "Exact" && utils.isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
 
                 // check if the request is ignored by user in the past decisions
-                let ignoreFlag = (((extensionMode == "Relaxed" && isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
-                (extensionMode == "Exact" && isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
+                let ignoreFlag = (((extensionMode == "Relaxed" && utils.isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
+                (extensionMode == "Exact" && utils.isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
 
                 // user needs to know about this dangerous request
                 if(!ignoreFlag) {
@@ -833,7 +858,7 @@ function xhRequest(rId) {
                         var currTab = tabs[0];
                         if (currTab) {
                             // init the map for the tab
-                            if(isEmpty(dangerousMapPerTab[currTab.id])) {
+                            if(utils.isEmpty(dangerousMapPerTab[currTab.id])) {
                                 dangerousMapPerTab[currTab.id] = [];
                             }
 
@@ -844,12 +869,12 @@ function xhRequest(rId) {
 
                             // set notification for user
                             chrome.browserAction.setBadgeBackgroundColor({ color: [102, 102, 102, 255] });
-                            var number  = isEmpty(dangerousMapPerTab[currTab.id]) ? 0 : dangerousMapPerTab[currTab.id].length;
+                            var number  = utils.isEmpty(dangerousMapPerTab[currTab.id]) ? 0 : dangerousMapPerTab[currTab.id].length;
                             chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
                         }
                     });
 
-                    // purgesuspiciousMapForTab(tId);
+                    // utils.purgesuspiciousMapForTab(tId);
                 
                     //console.log(data.id + " observable difference!");
                 }
@@ -869,10 +894,10 @@ function xhRequest(rId) {
                 //console.log('dangerous # ' + danCount + ' from ' + requestOnedata.source);
 
                 // extract Site/Origin data from source and target of a request
-                let targetSite = getSiteFromUrl(requestOnedata.target);
-                let targetOrigin = combineOrigin(getOriginFromUrl(requestOnedata.target));
-                let sourceSite = getSiteFromUrl(requestOnedata.source);
-                let sourceOrigin = combineOrigin(getOriginFromUrl(requestOnedata.source));
+                let targetSite = utils.getSiteFromUrl(requestOnedata.target);
+                let targetOrigin = utils.combineOrigin(utils.getOriginFromUrl(requestOnedata.target));
+                let sourceSite = utils.getSiteFromUrl(requestOnedata.source);
+                let sourceOrigin = utils.combineOrigin(utils.getOriginFromUrl(requestOnedata.source));
                 
                 // prepare element to compare with past user decisions
                 let element = [];
@@ -885,19 +910,19 @@ function xhRequest(rId) {
                 // extract tab Id
                 let tId = requestOnedata.tabId;
 
-                /*var excludeFlag = (((extensionMode == "Relaxed" && isSiteExcluded(sourceSite, targetSite)) ||
-                (extensionMode == "Exact" && isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
+                /*var excludeFlag = (((extensionMode == "Relaxed" && utils.isSiteExcluded(sourceSite, targetSite)) ||
+                (extensionMode == "Exact" && utils.isOriginExcluded(sourceOrigin, targetOrigin))) ? true : false);*/
 
                 // check if the request is ignored by user in the past decisions
-                let ignoreFlag = (((extensionMode == "Relaxed" && isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
-                (extensionMode == "Exact" && isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
+                let ignoreFlag = (((extensionMode == "Relaxed" && utils.isSiteIgnored(sourceSite, targetSite, ignoreSiteMap)) ||
+                (extensionMode == "Exact" && utils.isOriginIgnored(sourceOrigin, targetOrigin, ignoreOriginMap))) ? true : false);
                 // user needs to know about this dangerous request
                 if(!ignoreFlag) {
                     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
                         var currTab = tabs[0];
                         if (currTab) {
                             // init the map for the tab
-                            if(isEmpty(dangerousMapPerTab[currTab.id])) {
+                            if(utils.isEmpty(dangerousMapPerTab[currTab.id])) {
                                 dangerousMapPerTab[currTab.id] = [];
                             }
 
@@ -908,12 +933,12 @@ function xhRequest(rId) {
 
                             // set notification for user
                             chrome.browserAction.setBadgeBackgroundColor({ color: [102, 102, 102, 255] });
-                            var number  = isEmpty(dangerousMapPerTab[currTab.id]) ? 0 : dangerousMapPerTab[currTab.id].length;
+                            var number  = utils.isEmpty(dangerousMapPerTab[currTab.id]) ? 0 : dangerousMapPerTab[currTab.id].length;
                             chrome.browserAction.setBadgeText({text: number == 0 ? "" : number.toString()});
                         }
                     });
 
-                    // purgesuspiciousMapForTab(tId);
+                    // utils.purgesuspiciousMapForTab(tId);
                 
                     //console.log(data.id + " observable difference!");
                 }
