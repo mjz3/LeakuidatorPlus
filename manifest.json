@@ -12,14 +12,14 @@
   "background":
   {
 		"persistent": true,
-    "scripts": ["./asset/data.js","./lib/bundle.js","./lib/utils.js","./ext/background.js" ]
+    "page": "background.html"
   },
   "browser_action": {
-    "default_popup": "./ext/popup.html"
+    "default_popup": "popup.html"
   },
-  "options_page": "./ext/options.html",
+  "options_page": "options.html",
   "options_ui": {
-    "page": "./ext/options.html",
+    "page": "options.html",
     "open_in_tab": true
   }
 }
