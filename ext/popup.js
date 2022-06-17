@@ -4,39 +4,19 @@ var extMode = "Relaxed";
 
 // Get the list on current tab as soon as the document's DOM is ready.
 document.addEventListener('DOMContentLoaded', function () {
-    //setTimeout(function(){ /* */ }, 3000);
     chrome.runtime.sendMessage({type: "getMode"}, function(response) {
         if(response != undefined) {
             extMode = response.val;
-            //console.log("mode: " + extMode);
         }
     })
     chrome.runtime.sendMessage({type: "getSuspiciousList"}, function(response) {
-        //console.log("message received in popup!");
         if(response != undefined) {
             if(response.val != undefined) {
-                //console.log("response size : " + response.val.length);
                 createHtmlForSuspiciousList(response.val);
             }
         }
-        else {
-            //console.log("response size : 0");
-        }
     });
-    //var activeTabId;
-    //doInCurrentTab( function(tab){ activeTabId = tab.id } );
-    // if( true /*activeTabId >= 0*/ ) {
-    //     port.postMessage('test');
-    //     port.onMessage.addListener(function(response) {
-    //     if(true /*response.tabId === activeTabId*/) {
-    //         console.log("message received in popup!");
-    //         createHtmlForSuspiciousList(response.map);
-    //     }
-    //     else {
-    //         console.log("tab id doesn't match!");
-    //     }
-    // });
-    // }
+    
     var optbutton = document.getElementById("options-button");
     optbutton.addEventListener("click", function () {
         chrome.tabs.query({url: chrome.runtime.getURL('') + '*'}, tabs => {
@@ -61,18 +41,8 @@ function createHtmlForSuspiciousList(suspiciousMap) {
         recursivelyBuildHtmlForSuspiciousList(html, 0, suspiciousMap);
     }
 }
-/* find the error!
-document.querySelector("go-to-options").addEventListener(function() {
-    if (chrome.runtime.openOptionsPage) {
-      chrome.runtime.openOptionsPage();
-    } else {
-      window.open(chrome.runtime.getURL('options.html'));
-    }
-  });
-  */  
+ 
 function recursivelyBuildHtmlForSuspiciousList(html, index, suspiciousMap) {
-    //var suspiciousList = Object.keys(suspiciousMap);
-    
     if (suspiciousMap.length == index) {
         setHtmlForSuspiciousList(html, suspiciousMap);
         return;
@@ -110,7 +80,6 @@ function getIgnoreAllButton(idx) {
 function setHtmlForSuspiciousList(html, suspiciousMap) {
     let bodyDiv = document.getElementById("bodyDiv");
     bodyDiv.innerHTML  = html;
-    //console.log("add event listeners!");
     // Set up listeners for block/unblock links
     for(let i = 0; i < suspiciousMap.length; ++i) {
         let suspicious = suspiciousMap[i];
@@ -120,7 +89,6 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         let link = document.getElementById(idx+"_exclude");
         
             link.addEventListener('click', function() {
-                //console.log("exclude clicked!");
                 if(extMode == "Relaxed") {
                     chrome.runtime.sendMessage({type: 'excludeSite', source: src, target: trgt}, null);
                 } else {
@@ -133,7 +101,6 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         link = document.getElementById(idx+"_excludeAll");
 
             link.addEventListener('click', function() {
-                //console.log("excludeAll clicked!");
                 if(extMode == "Relaxed") {
                     chrome.runtime.sendMessage({type: 'excludeSiteAll', target: trgt}, null);
                 } else {
@@ -145,7 +112,6 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
 
         link = document.getElementById(idx+"_ignore");
             link.addEventListener('click', function() {
-                //console.log("ignore clicked!");
                 if(extMode == "Relaxed") {
                     chrome.runtime.sendMessage({type: 'ignoreSite', source: src, target: trgt}, null);
                 } else {
@@ -158,7 +124,6 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
         link = document.getElementById(idx+"_ignoreAll");
         
             link.addEventListener('click', function() {
-                //console.log("ignoreAll clicked!");
                 if(extMode == "Relaxed") {
                     chrome.runtime.sendMessage({type: 'ignoreSiteAll', target: trgt}, null);
                 } else {
@@ -168,5 +133,4 @@ function setHtmlForSuspiciousList(html, suspiciousMap) {
                 location.reload(true);
             });
     }
-    //console.log("all event listeners added!");
 }

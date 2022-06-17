@@ -128,9 +128,7 @@ function excludeRemoveListener() {
         for(let i = 0; i < excludeSelect.length; i++) {
             if(excludeSelect.options[i].selected) {
                 let opt = excludeSelect.options[i];
-                //console.log("value before split: " + opt.text);
                 let texts = opt.text.split(' => ');
-                //console.log("splited values: " + texts[0] + " " + texts[1] + " " + texts[2]);
                 let element = [texts[0], texts[1]];
                 remove.push(element);
                 excludeSelect.options[i] = null;
@@ -140,14 +138,13 @@ function excludeRemoveListener() {
             return;
         
         for(let i = 0; i < remove.length; i++) {
-            //console.log("request to remove: " + remove[i][0] + " to " + remove[i][1]);
             if(extMode == "Relaxed") {
                 chrome.runtime.sendMessage({type: 'removeExcludeSite', source: remove[i][0], target: remove[i][1]}, null);
             } else {
                 chrome.runtime.sendMessage({type: 'removeExcludeOrigin', source: remove[i][0], target: remove[i][1]}, null);
             }
         }
-        //deosnt remove!
+        //deosnt remove?!
     });
 }
 
@@ -184,9 +181,7 @@ function ignoreRemoveListener() {
         for(let i = 0; i < ignoreSelect.length; i++) {
             if(ignoreSelect.options[i].selected) {
                 let opt = ignoreSelect.options[i];
-                //console.log("value before split: " + opt.text);
                 let texts = opt.text.split(' => ');
-                //console.log("splited values: " + texts[0] + " " + texts[1] + " " + texts[2]);
                 let element = [texts[0], texts[1]];
                 remove.push(element);
                 ignoreSelect.options[i] = null;
@@ -196,13 +191,12 @@ function ignoreRemoveListener() {
             return;
         
         for(let i = 0; i < remove.length; i++) {
-            //console.log("request to remove: " + remove[i][0] + " to " + remove[i][1]);
             if(extMode == "Relaxed") {
                 chrome.runtime.sendMessage({type: 'removeIgnoreSite', source: remove[i][0], target: remove[i][1]}, null);
             } else {
                 chrome.runtime.sendMessage({type: 'removeIgnoreOrigin', source: remove[i][0], target: remove[i][1]}, null);
             }
         }
-        //deosnt remove
+        //deosnt remove?!
     });
 }
