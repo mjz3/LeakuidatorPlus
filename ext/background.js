@@ -381,9 +381,12 @@ function onBeforeSendHeaders(details) {
     }
 
     // last condition: is it ad or tracking?
+    // currently disabled (experimental feature)
+    /*
     if(utils.findProxyForURL(mvps, details.url) || utils.findProxyForURL(pll, details.url)) {
         return { requestHeaders: details.requestHeaders };
     }
+    */
     
     // if survived all the conditions, mark the request as suspicious
     if(!corwc[details.requestId]) {
