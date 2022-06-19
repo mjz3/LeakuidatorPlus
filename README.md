@@ -32,8 +32,8 @@ Leakuidator+ has two modes of operation, Relaxed and Exact, which reflect the cr
 
 ## Documentation
   - Third-party libraries:
-    - publicsuffixlist.js
-    - punycode.js
+    - [publicsuffixlist.js Release Version 1.0.0](https://github.com/gorhill/publicsuffixlist.js/releases/tag/1.0.0)
+    - [punycode.js Release v1.4.1](https://github.com/mathiasbynens/punycode.js/releases/tag/v1.4.1)
   - Thir-party datasets:
     - publicsuffixlist.dat
     - Peter lowe's hosts list

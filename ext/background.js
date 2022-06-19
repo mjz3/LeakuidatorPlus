@@ -1,6 +1,5 @@
 "use Exact";
 
-import publicSuffixList from '../lib/publicsuffixlist.js';
 import utils from '../lib/utils.js';
 
 // check if an element exists in array using a comparer function
