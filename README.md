@@ -34,7 +34,7 @@ Leakuidator+ has two modes of operation, Relaxed and Exact, which reflect the cr
   - Third-party libraries:
     - [publicsuffixlist.js Release Version 1.0.0](https://github.com/gorhill/publicsuffixlist.js/releases/tag/1.0.0)
     - [punycode.js Release v1.4.1](https://github.com/mathiasbynens/punycode.js/releases/tag/v1.4.1)
-  - Thir-party datasets (asset/data.js):
+  - Third-party datasets (asset/data.js):
     - [publicsuffixlist (Latest update: June 8, 2022)](https://publicsuffix.org/list/public_suffix_list.dat)
     - [Peter Lowe's Ad and tracking server list (Latest update: June 8, 2022)](https://pgl.yoyo.org/adservers/serverlist.php?hostformat=proxyautoconfig) -- currently not used
     - [MVPS list (Latest update: June 4, 2022)](https://winhelp2002.mvps.org/hosts.txt) -- currently not used
