@@ -42,8 +42,11 @@ Leakuidator+ has two modes of operation, Relaxed and Exact, which reflect the cr
 ## Installation
   # Chrome
   # Firefox
-    - Debugging
-      - Firefox -> enter 'about:debugging' in address bar -> This Firefox -> Load Temporary Add-on -> Select manifest.json in the source code
+    - Run
+      - git checkout firefox
+      - cd LeakuidatorPlus
+      - web-ext run 
+    - Generate Zip file of source code
+      - web-ext build --source-dir ./LeakuidatorPlus/
     - Generate XPI file
-      -
-
+      - 
