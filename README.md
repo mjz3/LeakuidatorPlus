@@ -45,8 +45,6 @@ Leakuidator+ has two modes of operation, Relaxed and Exact, which reflect the cr
     - Run
       - git checkout firefox
       - cd LeakuidatorPlus
-      - web-ext run 
+      - web-ext run
     - Generate Zip file of source code
-      - web-ext build --source-dir ./LeakuidatorPlus/
-    - Generate XPI file
-      - 
+      - web-ext build
