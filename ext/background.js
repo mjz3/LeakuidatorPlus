@@ -80,9 +80,9 @@ function init() {
     psl = getPSL();
     publicSuffixList.parse(psl, punycode.toASCII);
 
-    // load filter lists
-    pll = getPLL();
-    mvps = getMVPS();
+    // load filter lists -- experimental
+    //pll = getPLL();
+    //mvps = getMVPS();
 
     // get prior user decisions/configurations from storage
 	config();
