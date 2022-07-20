@@ -416,6 +416,15 @@ function onBeforeSendHeaders(details) {
     return { requestHeaders: utils.removeRequestHeaders(details, 'Cookie') };
 };
 
+function allowsOpener(details) {
+       for (let i = 0; i < details.responseHeaders.length; ++i) {
+            if (details.responseHeaders[i].name.toLowerCase() === 'cross-origin-opener-policy' && details.responseHeaders[i].value.toLowerCase() !== 'unsafe-none') {
+                return false;
+            }
+        }
+        return true;
+}
+
 /**
  * - store first response headers for suspicious requests
  * into memory, to be used by @xhRequest
@@ -424,7 +433,6 @@ function onBeforeSendHeaders(details) {
  * @param {details of the request} details 
  */
 function onHeadersReceived(details) {
-
     // check if it was marked as suspicious
     if(corwc[details.requestId]) {
 
@@ -448,6 +456,11 @@ function onHeadersReceived(details) {
         }
         // return response to first request, with Set-Cookie header removed
         return { responseHeaders: utils.removeResponseHeaders(details, 'Set-Cookie') };
+    }
+
+    if (!tabrelations[details.tabId] && allowsOpener(details)) {
+	    details.responseHeaders.push({name: "cross-origin-opener-policy", value: "same-origin-allow-popups"});
+	    return { responseHeaders: details.responseHeaders };
     }
 };
 
