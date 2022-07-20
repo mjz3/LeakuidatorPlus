@@ -433,6 +433,7 @@ function allowsOpener(details) {
  * @param {details of the request} details 
  */
 function onHeadersReceived(details) {
+
     // check if it was marked as suspicious
     if(corwc[details.requestId]) {
 
