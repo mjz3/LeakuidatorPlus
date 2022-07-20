@@ -54,7 +54,7 @@ function populateExcludeList(data) {
         for(let r = 0; r < data.length; r++) {
             let opt = document.createElement("option");
             opt.value = r;
-            opt.innerHTML = data[r][0] + " => " + data[r][1];
+            opt.innerText = data[r][0] + " => " + data[r][1];
             excludeSelect.appendChild(opt);
         }
     }
@@ -68,7 +68,7 @@ function populateIgnoreList(data) {
         for(let r = 0; r < data.length; r++) {
             let opt = document.createElement("option");
             opt.value = r;
-            opt.innerHTML = data[r][0] + " => " + data[r][1];
+            opt.innerText = data[r][0] + " => " + data[r][1];
             ignoreSelect.appendChild(opt);
         }
     }
@@ -115,7 +115,7 @@ function excludeAddListener() {
         let excludeSelect = document.getElementById('excludedMappingsBox');
         let opt = document.createElement("option");
         opt.value = excludeSelect.length;
-        opt.innerHTML = originVal + " => " + targetVal;
+        opt.innerText = originVal + " => " + targetVal;
         excludeSelect.appendChild(opt);
     });
 }
@@ -168,7 +168,7 @@ function ignoreAddListener() {
         let ignoreSelect = document.getElementById('ignoredMappingsBox');
         let opt = document.createElement("option");
         opt.value = ignoreSelect.length;
-        opt.innerHTML  = originVal + " => " + targetVal;
+        opt.innerText  = originVal + " => " + targetVal;
         ignoreSelect.appendChild(opt);
     });
 }
