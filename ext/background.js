@@ -248,7 +248,7 @@ function webNavigationonCompleted(details) {
 function trustedInitiator(details) {
 	if (details.initiator.startsWith('chrome-extension://')) return true;
 	if (details.initiator.startsWith('chrome://newtab/')) return true;
-	if (details.initiator.startsWith('edge://newtab/') return true;
+	if (details.initiator.startsWith('edge://newtab/')) return true;
 	return false;
 }
 
