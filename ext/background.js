@@ -245,6 +245,13 @@ function webNavigationonCompleted(details) {
     }
 };
 
+function trustedInitiator(details) {
+	if (details.initiator.startsWith('chrome-extension://')) return true;
+	if (details.initiator.startsWith('chrome://newtab/')) return true;
+	if (details.initiator.startsWith('edge://newtab/') return true;
+	return false;
+}
+
 /**
  * - check if a request is suspicious, based on 7 conditions
  * - if suspicious, store request data, for @xhRequest
@@ -252,7 +259,7 @@ function webNavigationonCompleted(details) {
  */
 function onBeforeSendHeaders(details) {
 
-    if(details.tabId == -1) {
+    if(details.tabId == -1 && trustedInitiator(details)) {
         //delete requestBody[details.requestId];
         return { requestHeaders: details.requestHeaders };
     }
@@ -311,10 +318,7 @@ function onBeforeSendHeaders(details) {
         // condition: whether the tab URL is valid
         if((navigation[details.tabId] == true && !tabrelations[details.tabId]) ||
             (!utils.isEmpty(tabPendingUrl[details.tabId]) && tabUrl[details.tabId].toLowerCase() !== tabPendingUrl[details.tabId].toLowerCase()) ||
-            details.tabId == -1 ||
-            tabUrl[details.tabId].toLowerCase().startsWith("chrome://newtab/") ||
-            tabUrl[details.tabId].toLowerCase().startsWith("chrome-extension://") ||
-            tabUrl[details.tabId].toLowerCase().startsWith("edge://newtab/")) {
+            trustedInitiator(details)) {
             return { requestHeaders: details.requestHeaders };
         }
 
